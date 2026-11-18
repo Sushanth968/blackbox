@@ -1,0 +1,39 @@
+# --- Python / backend ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/build/
+.vite/
+*.local
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Evidence uploads (runtime data, not source) ---
+/data/
+/uploads/
+*.sqlite3
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
