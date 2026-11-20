@@ -1,0 +1,35 @@
+workspace:
+  name: "Developer Incident Investigation"
+  description: "Workspace for software incident reconstruction — git, CI/CD, app logs"
+
+parsers:
+  enabled:
+    - json
+    - jsonl
+    - csv
+    - log
+    - git
+    - cicd
+    - syslog
+
+temporal:
+  out_of_order_threshold_seconds: 1
+  clock_skew_threshold_seconds: 300
+  duplicate_timestamp_min_count: 3
+  gap_anomaly_multiplier: 10
+  gap_anomaly_min_seconds: 3600
+
+entities:
+  extract: [user, ip, email, path, url, hash]
+  ignore: []
+
+export:
+  include_raw: true
+  report_raw_max_length: 200
+  report_sections:
+    - summary
+    - evidence_files
+    - temporal_conflicts
+    - flagged_events
+    - notes
+    - entities

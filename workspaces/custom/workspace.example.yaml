@@ -1,0 +1,42 @@
+# BlackBox Custom Workspace Configuration
+# Copy this file to workspace.yaml and customize as needed.
+
+workspace:
+  name: "My Investigation Workspace"
+  description: "Custom workspace for log analysis"
+
+parsers:
+  enabled:
+    - json
+    - jsonl
+    - csv
+    - log
+    - git
+    - cicd
+    - syslog
+  extra_timestamp_formats:
+    - "%d/%m/%Y %H:%M:%S"
+    - "%Y%m%d%H%M%S"
+
+temporal:
+  out_of_order_threshold_seconds: 1
+  clock_skew_threshold_seconds: 300
+  duplicate_timestamp_min_count: 3
+  gap_anomaly_multiplier: 10
+  gap_anomaly_min_seconds: 3600
+
+entities:
+  extract: [user, ip, email, path, url, hash]
+  aliases: {}
+  ignore: []
+
+export:
+  include_raw: true
+  report_raw_max_length: 200
+  report_sections:
+    - summary
+    - evidence_files
+    - temporal_conflicts
+    - flagged_events
+    - notes
+    - entities
