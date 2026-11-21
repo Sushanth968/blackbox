@@ -7,19 +7,22 @@ from models.evidence_file import EvidenceFile
 from models.event import Event
 from event_engine.normalizer import normalize_event
 
-# Add parsers/ (at repo root) to Python path
+# Make the repo-root `parsers` package importable without shadowing the stdlib.
+# Importing the parsers as top-level `json` / `csv` modules (with parsers/ at the
+# front of sys.path) shadows the standard library, which breaks both this module
+# and the parsers' own `import json` / `import csv`. Putting the repo root on the
+# path and importing them namespaced as `parsers.*` avoids the collision.
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-_PARSERS_DIR = os.path.join(_REPO_ROOT, "parsers")
-if _PARSERS_DIR not in sys.path:
-    sys.path.insert(0, _PARSERS_DIR)
+if _REPO_ROOT not in sys.path:
+    sys.path.append(_REPO_ROOT)
 
-from json.parser import parse_json
-from json.jsonl_parser import parse_jsonl
-from csv.parser import parse_csv
-from logs.log_parser import parse_log
-from logs.git_parser import parse_git
-from logs.cicd_parser import parse_cicd
-from logs.syslog_parser import parse_syslog
+from parsers.json.parser import parse_json
+from parsers.json.jsonl_parser import parse_jsonl
+from parsers.csv.parser import parse_csv
+from parsers.logs.log_parser import parse_log
+from parsers.logs.git_parser import parse_git
+from parsers.logs.cicd_parser import parse_cicd
+from parsers.logs.syslog_parser import parse_syslog
 
 PARSERS = {
     "json": parse_json,
