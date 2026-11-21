@@ -29,6 +29,11 @@ async def build_export(investigation_id: uuid.UUID, db: AsyncSession) -> dict:
     flagged_ids = {str(f.event_id) for f in flags}
     conflicts = detect_conflicts(events)
 
+    # Secret/credential findings recorded by the ingestion scanner live in
+    # event.extra["secrets"]. Surface them as an investigation-level summary.
+    secret_events = [e for e in events if isinstance(e.extra, dict) and e.extra.get("secrets")]
+    secret_findings = sum(len(e.extra["secrets"]) for e in secret_events)
+
     def _ts(dt) -> Optional[str]:
         return dt.isoformat() if dt else None
 
@@ -49,6 +54,8 @@ async def build_export(investigation_id: uuid.UUID, db: AsyncSession) -> dict:
             "evidence_files": len(ev_files),
             "total_events": len(events),
             "flagged_events": len(flags),
+            "secret_events": len(secret_events),
+            "secret_findings": secret_findings,
             "entities": len(entities),
             "relationships": len(rels),
             "temporal_conflicts": len(conflicts),
@@ -141,6 +148,7 @@ def render_text_report(data: dict) -> str:
         f"  Evidence files     : {s.get('evidence_files')}",
         f"  Total events       : {s.get('total_events')}",
         f"  Flagged events     : {s.get('flagged_events')}",
+        f"  Secret findings    : {s.get('secret_findings')} in {s.get('secret_events')} event(s)",
         f"  Entities           : {s.get('entities')}",
         f"  Relationships      : {s.get('relationships')}",
         f"  Temporal conflicts : {s.get('temporal_conflicts')}",
@@ -160,6 +168,25 @@ def render_text_report(data: dict) -> str:
         lines += ["TEMPORAL CONFLICTS", "-" * 40]
         for c in conflicts:
             lines.append(f"  [{c.get('type','?'):22s}] {c.get('description')}")
+        lines.append("")
+
+    secret_events = [
+        ev for ev in data.get("events", [])
+        if isinstance(ev.get("extra"), dict) and ev["extra"].get("secrets")
+    ]
+    if secret_events:
+        lines += ["SECURITY FINDINGS (SECRETS)", "-" * 40]
+        for ev in secret_events:
+            ts = (ev.get("timestamp") or "no-ts")[:19]
+            where = ev.get("source") or "?"
+            line_no = ev.get("source_line")
+            loc = f"{where}:{line_no}" if line_no else where
+            detectors = ", ".join(
+                f"{sec.get('detector')}({sec.get('confidence')})"
+                for sec in ev["extra"]["secrets"]
+            )
+            lines.append(f"  {ts}  {loc}")
+            lines.append(f"    Detected: {detectors}")
         lines.append("")
 
     flagged = data.get("flagged_events", [])

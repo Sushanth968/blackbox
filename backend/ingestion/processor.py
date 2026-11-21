@@ -2,10 +2,12 @@ import uuid
 import os
 import sys
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from models.evidence_file import EvidenceFile
 from models.event import Event
+from models.flagged_event import FlaggedEvent
 from event_engine.normalizer import normalize_event
+from event_engine.secret_scanner import scrub_event
 
 # Add parsers/ (at repo root) to Python path
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -69,8 +71,10 @@ async def process_evidence_file(
         await db.commit()
 
         raw_events = parser(file_path)
+        flagged: list[tuple[Event, list[str]]] = []
         for raw in raw_events:
             raw = normalize_event(raw)
+            detectors = scrub_event(raw)
             event = Event(
                 investigation_id=investigation_id,
                 evidence_file_id=evidence_id,
@@ -86,6 +90,21 @@ async def process_evidence_file(
                 extra=raw.get("extra"),
             )
             db.add(event)
+            if detectors:
+                flagged.append((event, detectors))
+
+        # Auto-flag events in which secrets were detected. Flush first so the
+        # newly added events have primary keys to reference.
+        if flagged:
+            await db.flush()
+            for event, detectors in flagged:
+                db.add(
+                    FlaggedEvent(
+                        investigation_id=investigation_id,
+                        event_id=event.id,
+                        label="secret: " + ", ".join(detectors),
+                    )
+                )
 
         ev_file.status = "processed"
         await db.commit()
@@ -102,6 +121,10 @@ async def reprocess_evidence_file(
     investigation_id: uuid.UUID,
     db: AsyncSession,
 ):
+    # Remove flags attached to this file's events before the events themselves,
+    # so auto-generated secret flags don't accumulate or dangle across reruns.
+    event_ids = select(Event.id).where(Event.evidence_file_id == evidence_id)
+    await db.execute(delete(FlaggedEvent).where(FlaggedEvent.event_id.in_(event_ids)))
     await db.execute(delete(Event).where(Event.evidence_file_id == evidence_id))
     await db.commit()
     await process_evidence_file(evidence_id, file_path, file_type, investigation_id, db)
