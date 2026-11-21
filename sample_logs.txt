@@ -1,0 +1,113 @@
+2024-03-15 08:00:01 INFO [auth] user=alice ip=192.168.1.10 action=login status=success
+2024-03-15 08:00:45 INFO [api] user=alice ip=192.168.1.10 method=GET path=/api/projects status=200
+2024-03-15 08:01:12 INFO [api] user=alice ip=192.168.1.10 method=POST path=/api/projects status=201
+2024-03-15 08:02:33 INFO [api] user=bob ip=192.168.1.22 method=GET path=/api/projects status=200
+2024-03-15 08:03:00 WARN [auth] user=bob ip=192.168.1.22 action=login attempt=2 status=failed
+2024-03-15 08:03:05 WARN [auth] user=bob ip=192.168.1.22 action=login attempt=3 status=failed
+2024-03-15 08:03:10 ERROR [auth] user=bob ip=192.168.1.22 action=login attempt=4 status=locked
+2024-03-15 08:04:00 INFO [auth] user=alice ip=192.168.1.10 action=token_refresh status=success
+2024-03-15 08:05:22 INFO [api] user=alice ip=192.168.1.10 method=PUT path=/api/projects/42 status=200
+2024-03-15 08:06:11 INFO [api] user=carol ip=10.0.0.5 method=GET path=/api/users status=200
+2024-03-15 08:07:45 INFO [api] user=carol ip=10.0.0.5 method=DELETE path=/api/projects/17 status=204
+2024-03-15 08:08:00 WARN [api] user=carol ip=10.0.0.5 method=DELETE path=/api/projects/18 status=403
+2024-03-15 08:09:33 INFO [db] action=query table=projects duration_ms=12 rows=142
+2024-03-15 08:10:00 INFO [auth] user=dave ip=172.16.0.8 action=login status=success
+2024-03-15 08:10:01 INFO [api] user=dave ip=172.16.0.8 method=GET path=/api/admin/users status=200
+2024-03-15 08:10:02 INFO [api] user=dave ip=172.16.0.8 method=GET path=/api/admin/config status=200
+2024-03-15 08:10:03 INFO [api] user=dave ip=172.16.0.8 method=POST path=/api/admin/config status=200
+2024-03-15 08:10:58 INFO [api] user=dave ip=172.16.0.8 method=PUT path=/api/admin/users/bob status=200
+2024-03-15 08:11:00 INFO [auth] user=bob ip=192.168.1.22 action=unlock status=success
+2024-03-15 08:12:00 INFO [auth] user=bob ip=192.168.1.22 action=login status=success
+2024-03-15 08:12:45 INFO [api] user=bob ip=192.168.1.22 method=GET path=/api/projects status=200
+2024-03-15 08:13:10 INFO [deploy] user=alice ip=192.168.1.10 action=deploy env=staging version=v2.3.1 status=started
+2024-03-15 08:14:30 INFO [deploy] user=alice ip=192.168.1.10 action=deploy env=staging version=v2.3.1 status=success
+2024-03-15 08:15:00 INFO [db] action=migration version=0041 status=applied duration_ms=320
+2024-03-15 08:16:00 INFO [api] user=carol ip=10.0.0.5 method=GET path=/api/reports status=200
+2024-03-15 08:17:22 INFO [api] user=carol ip=10.0.0.5 method=POST path=/api/reports status=201
+2024-03-15 08:18:05 WARN [api] user=unknown ip=203.0.113.99 method=GET path=/api/admin/config status=401
+2024-03-15 08:18:06 WARN [api] user=unknown ip=203.0.113.99 method=POST path=/api/admin/users status=401
+2024-03-15 08:18:07 WARN [api] user=unknown ip=203.0.113.99 method=DELETE path=/api/projects/1 status=401
+2024-03-15 08:18:08 ERROR [security] ip=203.0.113.99 action=rate_limit_exceeded endpoint=/api/admin threshold=10
+2024-03-15 08:19:00 INFO [api] user=alice ip=192.168.1.10 method=GET path=/api/projects/42 status=200
+2024-03-15 08:20:00 INFO [deploy] user=alice ip=192.168.1.10 action=deploy env=production version=v2.3.1 status=started
+2024-03-15 08:21:00 ERROR [deploy] user=alice ip=192.168.1.10 action=deploy env=production version=v2.3.1 status=failed reason=healthcheck_timeout
+2024-03-15 08:21:05 WARN [deploy] user=alice ip=192.168.1.10 action=rollback env=production version=v2.3.0 status=started
+2024-03-15 08:21:45 INFO [deploy] user=alice ip=192.168.1.10 action=rollback env=production version=v2.3.0 status=success
+2024-03-15 08:22:00 INFO [api] user=bob ip=192.168.1.22 method=POST path=/api/projects/43 status=201
+2024-03-15 08:23:00 INFO [db] action=backup status=started
+2024-03-15 08:24:12 INFO [db] action=backup status=completed size_mb=512
+2024-03-15 08:25:00 INFO [api] user=dave ip=172.16.0.8 method=GET path=/api/logs status=200
+2024-03-15 08:26:33 INFO [api] user=carol ip=10.0.0.5 method=GET path=/api/projects status=200
+2024-03-15 08:27:00 WARN [db] action=query table=events duration_ms=4820 rows=98211 slow_query=true
+2024-03-15 08:28:00 INFO [api] user=alice ip=192.168.1.10 method=PATCH path=/api/projects/42 status=200
+2024-03-15 08:29:11 INFO [auth] user=eve ip=192.168.1.55 action=login status=success
+2024-03-15 08:30:00 INFO [api] user=eve ip=192.168.1.55 method=GET path=/api/projects status=200
+2024-03-15 08:30:01 INFO [api] user=eve ip=192.168.1.55 method=GET path=/api/projects/42 status=200
+2024-03-15 08:30:02 INFO [api] user=eve ip=192.168.1.55 method=GET path=/api/projects/43 status=200
+2024-03-15 08:30:03 INFO [api] user=eve ip=192.168.1.55 method=GET path=/api/users status=403
+2024-03-15 08:30:04 WARN [security] user=eve ip=192.168.1.55 action=unauthorized_access path=/api/users
+2024-03-15 08:31:00 INFO [api] user=bob ip=192.168.1.22 method=GET path=/api/projects/43 status=200
+2024-03-15 08:32:00 INFO [db] action=query table=users duration_ms=8 rows=27
+2024-03-15 08:33:22 INFO [api] user=alice ip=192.168.1.10 method=POST path=/api/comments status=201
+2024-03-15 08:34:00 INFO [deploy] user=dave ip=172.16.0.8 action=deploy env=staging version=v2.3.2 status=started
+2024-03-15 08:35:30 INFO [deploy] user=dave ip=172.16.0.8 action=deploy env=staging version=v2.3.2 status=success
+2024-03-15 08:36:00 INFO [api] user=carol ip=10.0.0.5 method=PUT path=/api/reports/5 status=200
+2024-03-15 08:37:11 ERROR [api] user=alice ip=192.168.1.10 method=POST path=/api/projects status=500 reason=db_connection_error
+2024-03-15 08:37:12 ERROR [db] action=connection pool=exhausted connections=50 waiting=12
+2024-03-15 08:37:13 ERROR [db] action=connection pool=exhausted connections=50 waiting=15
+2024-03-15 08:37:30 INFO [db] action=connection pool=recovered connections=10
+2024-03-15 08:38:00 INFO [api] user=alice ip=192.168.1.10 method=POST path=/api/projects status=201
+2024-03-15 08:39:00 INFO [auth] user=frank ip=10.10.0.3 action=login status=success
+2024-03-15 08:40:00 INFO [api] user=frank ip=10.10.0.3 method=GET path=/api/projects status=200
+2024-03-15 08:40:45 INFO [api] user=frank ip=10.10.0.3 method=DELETE path=/api/projects/44 status=404
+2024-03-15 08:41:00 WARN [security] ip=198.51.100.7 user=unknown action=port_scan detected=true ports=22,80,443,8080,5432
+2024-03-15 08:42:00 INFO [api] user=bob ip=192.168.1.22 method=GET path=/api/projects status=200
+2024-03-15 08:43:00 INFO [api] user=carol ip=10.0.0.5 method=POST path=/api/projects status=201
+2024-03-15 08:44:00 INFO [db] action=vacuum table=events status=started
+2024-03-15 08:45:30 INFO [db] action=vacuum table=events status=completed duration_ms=89000
+2024-03-15 08:46:00 INFO [api] user=alice ip=192.168.1.10 method=GET path=/api/projects status=200
+2024-03-15 08:46:59 INFO [api] user=dave ip=172.16.0.8 method=GET path=/api/admin/users status=200
+2024-03-15 08:47:00 INFO [deploy] user=alice ip=192.168.1.10 action=deploy env=production version=v2.3.2 status=started
+2024-03-15 08:48:20 INFO [deploy] user=alice ip=192.168.1.10 action=deploy env=production version=v2.3.2 status=success
+2024-03-15 08:49:00 INFO [api] user=eve ip=192.168.1.55 method=GET path=/api/projects status=200
+2024-03-15 08:50:00 INFO [auth] user=alice ip=192.168.1.10 action=logout status=success
+2024-03-15 08:50:05 INFO [auth] user=bob ip=192.168.1.22 action=logout status=success
+2024-03-15 08:50:10 INFO [auth] user=carol ip=10.0.0.5 action=logout status=success
+2024-03-15 09:00:00 INFO [cron] job=cleanup_sessions action=started
+2024-03-15 09:00:01 INFO [cron] job=cleanup_sessions action=deleted count=14
+2024-03-15 09:00:02 INFO [cron] job=cleanup_sessions action=completed
+2024-03-15 09:05:00 INFO [auth] user=alice ip=192.168.1.10 action=login status=success
+2024-03-15 09:05:33 INFO [api] user=alice ip=192.168.1.10 method=GET path=/api/projects status=200
+2024-03-15 09:06:00 ERROR [api] user=alice ip=192.168.1.10 method=GET path=/api/projects/99 status=404
+2024-03-15 09:07:00 INFO [api] user=frank ip=10.10.0.3 method=POST path=/api/comments status=201
+2024-03-15 09:08:11 WARN [api] user=frank ip=10.10.0.3 method=POST path=/api/comments status=429 reason=rate_limited
+2024-03-15 09:09:00 INFO [db] action=query table=comments duration_ms=5 rows=330
+2024-03-15 09:10:00 INFO [api] user=dave ip=172.16.0.8 method=PUT path=/api/admin/config status=200
+2024-03-15 09:10:30 INFO [api] user=carol ip=10.0.0.5 method=GET path=/api/reports status=200
+2024-03-15 09:11:00 INFO [deploy] user=dave ip=172.16.0.8 action=deploy env=production version=v2.3.3 status=started
+2024-03-15 09:12:45 ERROR [deploy] user=dave ip=172.16.0.8 action=deploy env=production version=v2.3.3 status=failed reason=migration_error
+2024-03-15 09:12:50 WARN [db] action=migration version=0042 status=failed error=column_already_exists
+2024-03-15 09:13:00 WARN [deploy] user=dave ip=172.16.0.8 action=rollback env=production version=v2.3.2 status=started
+2024-03-15 09:13:40 INFO [deploy] user=dave ip=172.16.0.8 action=rollback env=production version=v2.3.2 status=success
+2024-03-15 09:14:00 ERROR [db] action=migration version=0042 status=rolled_back
+2024-03-15 09:15:00 INFO [api] user=alice ip=192.168.1.10 method=GET path=/api/projects status=200
+2024-03-15 09:16:22 INFO [api] user=bob ip=192.168.1.22 method=PATCH path=/api/projects/43 status=200
+2024-03-15 09:17:00 INFO [auth] user=grace ip=10.0.1.100 action=login status=success
+2024-03-15 09:17:30 INFO [api] user=grace ip=10.0.1.100 method=GET path=/api/projects status=200
+2024-03-15 09:18:00 INFO [api] user=grace ip=10.0.1.100 method=POST path=/api/projects status=201
+2024-03-15 09:19:11 INFO [api] user=grace ip=10.0.1.100 method=GET path=/api/users status=403
+2024-03-15 09:20:00 WARN [security] user=grace ip=10.0.1.100 action=unauthorized_access path=/api/users
+2024-03-15 09:21:00 INFO [api] user=carol ip=10.0.0.5 method=DELETE path=/api/reports/3 status=204
+2024-03-15 09:22:33 INFO [db] action=query table=projects duration_ms=18 rows=148
+2024-03-15 09:23:00 INFO [api] user=dave ip=172.16.0.8 method=GET path=/api/admin/logs status=200
+2024-03-15 09:24:00 INFO [deploy] user=alice ip=192.168.1.10 action=tag env=production version=v2.3.2 tag=stable status=success
+2024-03-15 09:25:00 INFO [api] user=frank ip=10.10.0.3 method=GET path=/api/projects status=200
+2024-03-15 09:26:11 INFO [api] user=eve ip=192.168.1.55 method=GET path=/api/projects/45 status=404
+2024-03-15 09:27:00 INFO [db] action=index_rebuild table=events status=started
+2024-03-15 09:28:30 INFO [db] action=index_rebuild table=events status=completed duration_ms=61000
+2024-03-15 09:29:00 INFO [api] user=alice ip=192.168.1.10 method=POST path=/api/projects status=201
+2024-03-15 08:55:00 WARN [temporal] note=clock_skew source=app-server-02 offset_seconds=-320 reference=app-server-01
+2024-03-15 09:30:00 INFO [auth] user=alice ip=192.168.1.10 action=logout status=success
+2024-03-15 09:30:05 INFO [auth] user=dave ip=172.16.0.8 action=logout status=success
+2024-03-15 09:30:10 INFO [auth] user=grace ip=10.0.1.100 action=logout status=success
+2024-03-15 09:30:15 INFO [auth] user=frank ip=10.10.0.3 action=logout status=success
