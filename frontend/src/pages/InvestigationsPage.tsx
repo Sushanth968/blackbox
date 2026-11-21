@@ -1,10 +1,17 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, FolderOpen, Loader2 } from 'lucide-react'
+import { Plus, FolderSearch, Loader2, ChevronRight } from 'lucide-react'
 import { api } from '../services/api'
 import type { Investigation } from '../services/types'
 import { format } from 'date-fns'
+import clsx from 'clsx'
+
+const STATUS_STYLES: Record<string, string> = {
+  open:      'bg-success/15 text-success border border-success/30',
+  in_review: 'bg-warning/15 text-warning border-warning/30',
+  closed:    'bg-muted/10 text-muted border-muted/20',
+}
 
 export default function InvestigationsPage() {
   const qc = useQueryClient()
@@ -29,29 +36,34 @@ export default function InvestigationsPage() {
   })
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Investigations</h1>
+        <div>
+          <h1 className="text-lg font-bold text-white">Investigations</h1>
+          <p className="text-xs text-muted mt-0.5">Evidence-driven event reconstruction</p>
+        </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/80 rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-accent hover:bg-accent-2 rounded-md text-xs font-medium text-white transition-colors"
         >
-          <Plus size={16} />
+          <Plus size={13} />
           New Investigation
         </button>
       </div>
 
+      {/* Create form */}
       {showForm && (
-        <div className="bg-panel border border-border rounded-xl p-5 mb-6">
-          <h2 className="text-sm font-semibold mb-4 text-gray-300">New Investigation</h2>
+        <div className="bg-panel border border-border rounded-xl p-5 mb-5">
+          <h2 className="text-xs font-semibold mb-4 text-white">New Investigation</h2>
           <input
-            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:border-accent"
-            placeholder="Title"
+            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-white mb-3 focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+            placeholder="Title — e.g. Production API failure after deployment"
             value={title}
             onChange={e => setTitle(e.target.value)}
           />
           <textarea
-            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm mb-3 resize-none focus:outline-none focus:border-accent"
+            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-white mb-3 resize-none focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
             placeholder="Description (optional)"
             rows={2}
             value={description}
@@ -61,13 +73,13 @@ export default function InvestigationsPage() {
             <button
               onClick={() => create.mutate({ title, description })}
               disabled={!title || create.isPending}
-              className="px-4 py-2 bg-accent hover:bg-accent/80 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors"
+              className="px-3 py-1.5 bg-accent hover:bg-accent-2 disabled:opacity-50 rounded-md text-xs font-medium text-white transition-colors"
             >
               {create.isPending ? 'Creating…' : 'Create'}
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-colors"
+              className="px-3 py-1.5 bg-panel-2 hover:bg-white/10 border border-border rounded-md text-xs text-muted hover:text-white transition-colors"
             >
               Cancel
             </button>
@@ -75,35 +87,54 @@ export default function InvestigationsPage() {
         </div>
       )}
 
+      {/* List */}
       {isLoading ? (
-        <div className="flex justify-center py-16"><Loader2 size={24} className="animate-spin text-gray-500" /></div>
+        <div className="flex justify-center py-16">
+          <Loader2 size={20} className="animate-spin text-muted" />
+        </div>
       ) : investigations?.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <FolderOpen size={40} className="mx-auto mb-3 opacity-40" />
-          <p>No investigations yet. Create one to get started.</p>
+        <div className="text-center py-20 text-muted">
+          <div className="w-12 h-12 rounded-full bg-panel border border-border flex items-center justify-center mx-auto mb-4">
+            <FolderSearch size={20} className="opacity-40" />
+          </div>
+          <p className="text-sm">No investigations yet</p>
+          <p className="text-xs mt-1 text-subtle">Create one to start reconstructing events</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {investigations?.map(inv => (
-            <Link
-              key={inv.id}
-              to={`/investigations/${inv.id}`}
-              className="block bg-panel border border-border hover:border-accent/50 rounded-xl p-4 transition-colors"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-medium text-white">{inv.title}</h3>
-                  {inv.description && <p className="text-sm text-gray-400 mt-0.5">{inv.description}</p>}
+        <div className="space-y-2">
+          {investigations?.map(inv => {
+            const statusKey = inv.status
+            return (
+              <Link
+                key={inv.id}
+                to={`/investigations/${inv.id}`}
+                className="flex items-center gap-4 bg-panel border border-border hover:border-border-2 rounded-xl px-5 py-4 transition-all group"
+              >
+                {/* Icon */}
+                <div className="w-9 h-9 rounded-lg bg-panel-2 border border-border flex items-center justify-center flex-shrink-0">
+                  <FolderSearch size={15} className="text-muted group-hover:text-accent transition-colors" />
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  inv.status === 'open' ? 'bg-success/20 text-success' : 'bg-gray-500/20 text-gray-400'
-                }`}>
-                  {inv.status}
-                </span>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">{format(new Date(inv.created_at), 'MMM d, yyyy HH:mm')}</p>
-            </Link>
-          ))}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-medium text-white group-hover:text-accent transition-colors truncate">{inv.title}</h3>
+                    <span className={clsx('text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1', STATUS_STYLES[statusKey] || STATUS_STYLES.open)}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                      {inv.status.replace('_', ' ')}
+                    </span>
+                  </div>
+                  {inv.description && (
+                    <p className="text-xs text-muted mt-0.5 truncate">{inv.description}</p>
+                  )}
+                  <p className="text-[10px] text-subtle mt-1">{format(new Date(inv.created_at), 'MMM d, yyyy · HH:mm')}</p>
+                </div>
+
+                {/* Arrow */}
+                <ChevronRight size={14} className="text-subtle group-hover:text-muted transition-colors flex-shrink-0" />
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>
