@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+# The backend package uses top-level imports (e.g. `from core.workspace import ...`),
+# so the backend/ directory must be on the import path. The repo root is added too
+# for the top-level `parsers` package.
+pythonpath = ["backend", "."]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --import-mode=importlib"
