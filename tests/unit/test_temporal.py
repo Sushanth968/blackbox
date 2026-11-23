@@ -1,13 +1,12 @@
 """Tests for the temporal conflict detector (backend/temporal_engine/temporal.py).
 
-Thresholds come from the active workspace config (defaults when none is set).
-These tests build lightweight event doubles — the detector only reads the
-attributes below, so we don't need the full ORM Event model or a database.
+Thresholds and dependency rules come from the active workspace config (defaults
+when none is set). These tests build lightweight event doubles — the detector
+only reads the attributes below, so we don't need the ORM Event model or a DB.
 """
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-
-import pytest
 
 from core.workspace import workspace as ws
 from temporal_engine.temporal import detect_conflicts
@@ -21,11 +20,31 @@ class Ev:
     source: str
     timestamp: datetime
     actor: str | None = None
+    action: str | None = None
+    object: str | None = None
     source_line: int | None = None
 
 
 def _types(conflicts):
     return {c["type"] for c in conflicts}
+
+
+@contextlib.contextmanager
+def _dependency_rules(rules):
+    original = ws.temporal.dependency_rules
+    ws.temporal.dependency_rules = rules
+    try:
+        yield
+    finally:
+        ws.temporal.dependency_rules = original
+
+
+DEPLOY_AFTER_BUILD = {
+    "name": "deploy-after-build",
+    "cause": {"action": "build"},
+    "effect": {"action": "deploy"},
+    "scope": ["object"],
+}
 
 
 def test_duplicate_timestamps_flagged():
@@ -63,16 +82,53 @@ def test_clean_single_source_has_no_conflicts():
     assert detect_conflicts(events) == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known bug: _out_of_order sorts events by timestamp before comparing, so it "
-    "can never fire. Needs a line-order-vs-timestamp comparison. Follow-up PR.",
-)
 def test_out_of_order_flagged_when_line_order_contradicts_timestamps():
-    """Line 2 has an earlier timestamp than line 1 in the same source — a classic
-    out-of-order anomaly that should be reported."""
+    """A later line carrying an earlier timestamp within one source is an
+    out-of-order anomaly that must be reported."""
     events = [
         Ev("1", "app.log", BASE, source_line=1),
         Ev("2", "app.log", BASE - timedelta(seconds=120), source_line=2),
     ]
     assert "out_of_order" in _types(detect_conflicts(events))
+
+
+def test_mixed_naive_and_aware_timestamps_do_not_crash():
+    """Real multi-source investigations mix tz-aware and naive timestamps; the
+    detector must treat naive as UTC rather than raising a TypeError."""
+    naive = datetime(2026, 11, 20, 10, 0, 30)  # no tzinfo
+    events = [
+        Ev("1", "app.log", BASE, source_line=1),
+        Ev("2", "app.log", naive, source_line=2),
+    ]
+    result = detect_conflicts(events)  # must not raise
+    assert isinstance(result, list)
+
+
+def test_dependency_violation_when_deploy_precedes_build():
+    with _dependency_rules([DEPLOY_AFTER_BUILD]):
+        events = [
+            Ev("1", "ci.log", BASE, action="deploy", object="svc-a", source_line=1),
+            Ev("2", "ci.log", BASE + timedelta(seconds=60), action="build", object="svc-a", source_line=2),
+        ]
+        assert "dependency_violation" in _types(detect_conflicts(events))
+
+
+def test_no_dependency_violation_when_build_precedes_deploy():
+    with _dependency_rules([DEPLOY_AFTER_BUILD]):
+        events = [
+            Ev("1", "ci.log", BASE, action="build", object="svc-a", source_line=1),
+            Ev("2", "ci.log", BASE + timedelta(seconds=60), action="deploy", object="svc-a", source_line=2),
+        ]
+        assert "dependency_violation" not in _types(detect_conflicts(events))
+
+
+def test_dependency_scope_isolates_by_object():
+    with _dependency_rules([DEPLOY_AFTER_BUILD]):
+        events = [
+            Ev("1", "ci.log", BASE, action="build", object="svc-a", source_line=1),
+            Ev("2", "ci.log", BASE + timedelta(seconds=60), action="deploy", object="svc-a", source_line=2),
+            Ev("3", "ci.log", BASE + timedelta(seconds=120), action="deploy", object="svc-b", source_line=3),
+        ]
+        violations = [c for c in detect_conflicts(events) if c["type"] == "dependency_violation"]
+        assert len(violations) == 1
+        assert violations[0]["event_b_id"] == "3"

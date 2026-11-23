@@ -18,6 +18,15 @@ temporal:
   duplicate_timestamp_min_count: 3
   gap_anomaly_multiplier: 10
   gap_anomaly_min_seconds: 3600
+  dependency_rules:
+    - name: deploy-after-build
+      cause: {action: build}
+      effect: {action: deploy}
+      scope: [object]
+    - name: logout-after-login
+      cause: {action: login}
+      effect: {action: logout}
+      scope: [actor]
 
 entities:
   extract: [user, ip, email, path, url, hash]

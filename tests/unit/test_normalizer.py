@@ -1,11 +1,8 @@
 """Tests for the event normalizer (backend/event_engine/normalizer.py).
 
 The normalizer extracts actor / action / object / IPs / HTTP status from a raw
-log line into the common event structure. These tests document and lock that
-behavior; cases marked xfail record known imprecisions to fix in a follow-up.
+log line into the common event structure.
 """
-import pytest
-
 from event_engine.normalizer import normalize_event
 
 
@@ -40,12 +37,20 @@ def test_returns_event_unchanged_when_no_raw():
     assert event == {"actor": "bob"}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known bug: HTTP_STATUS_PATTERN matches an IP octet (e.g. 127) before the "
-    "real status code. Fix tracked as a follow-up PR.",
-)
 def test_ip_octet_not_misread_as_http_status():
-    """An IP like 127.0.0.1 should not have '127' picked up as an HTTP status."""
+    """An IP like 127.0.0.1 must not have '127' picked up as an HTTP status."""
     event = normalize_event({"raw": '127.0.0.1 "GET /api/orders HTTP/1.1" 200'})
     assert event.get("extra", {}).get("http_status") == 200
+
+
+def test_status_read_from_response_position_in_access_log():
+    event = normalize_event(
+        {"raw": '10.0.0.5 - - [10/Nov/2026] "GET /v2/users HTTP/1.1" 404 512'}
+    )
+    assert event["extra"]["http_status"] == 404
+    assert event["severity"] == "warning"
+
+
+def test_plain_numbers_are_not_mistaken_for_http_status():
+    event = normalize_event({"raw": "processed batch 250 of 900 items"})
+    assert "http_status" not in event.get("extra", {})
