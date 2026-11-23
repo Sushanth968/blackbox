@@ -26,7 +26,14 @@ OBJECT_PATTERNS = [
 ]
 
 IP_PATTERN = re.compile(r'\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b')
-HTTP_STATUS_PATTERN = re.compile(r'\b([1-5]\d{2})\b')
+
+# HTTP status is matched only where it is unambiguous — in response position
+# right after a quoted request (common/combined access-log format), or via an
+# explicit ``status=``/``status:`` assignment. This avoids misreading IP octets
+# (e.g. 127 in 127.0.0.1) or stray numbers (byte counts, path segments) as a
+# status code.
+RESPONSE_STATUS_PATTERN = re.compile(r'"[A-Z]{3,7}[^"]*"\s+(\d{3})\b')
+EXPLICIT_STATUS_PATTERN = re.compile(r'\bstatus[=:\s]+(\d{3})\b', re.IGNORECASE)
 
 
 def normalize_event(event: dict) -> dict:
@@ -59,17 +66,30 @@ def normalize_event(event: dict) -> dict:
     ips = IP_PATTERN.findall(raw)
     if ips:
         extra["ips"] = list(dict.fromkeys(ips))
-    status_m = HTTP_STATUS_PATTERN.search(raw)
-    if status_m:
-        code = int(status_m.group(1))
-        if 100 <= code <= 599:
-            extra["http_status"] = code
-            if not event.get("severity") or event["severity"] == "info":
-                if code >= 500:
-                    event["severity"] = "error"
-                elif code >= 400:
-                    event["severity"] = "warning"
+
+    code = _extract_http_status(raw)
+    if code is not None:
+        extra["http_status"] = code
+        if not event.get("severity") or event["severity"] == "info":
+            if code >= 500:
+                event["severity"] = "error"
+            elif code >= 400:
+                event["severity"] = "warning"
+
     if extra:
         event["extra"] = extra
 
     return event
+
+
+def _extract_http_status(raw: str):
+    """Return an HTTP status code found in response position or an explicit
+    ``status=`` form, else None. Deliberately conservative to avoid false
+    positives from IP octets or unrelated 3-digit numbers."""
+    m = RESPONSE_STATUS_PATTERN.search(raw)
+    if not m:
+        m = EXPLICIT_STATUS_PATTERN.search(raw)
+    if not m:
+        return None
+    code = int(m.group(1))
+    return code if 100 <= code <= 599 else None

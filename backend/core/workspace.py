@@ -24,6 +24,12 @@ class TemporalConfig:
     duplicate_timestamp_min_count: int = 3
     gap_anomaly_multiplier: float = 10.0
     gap_anomaly_min_seconds: float = 3600.0
+    # Declarative causal-dependency rules. Each rule:
+    #   {name, cause: {<field>: <value>}, effect: {<field>: <value>},
+    #    scope: [<field>...], max_lag_seconds: <float|null>}
+    # An effect occurring with no preceding cause in the same scope (or outside
+    # max_lag_seconds) is flagged as a 'dependency_violation'.
+    dependency_rules: list = field(default_factory=list)
 
 
 @dataclass
@@ -93,6 +99,8 @@ def load_workspace_config(path: Optional[str] = None) -> WorkspaceConfig:
         cfg.temporal.gap_anomaly_multiplier = t["gap_anomaly_multiplier"]
     if t.get("gap_anomaly_min_seconds") is not None:
         cfg.temporal.gap_anomaly_min_seconds = t["gap_anomaly_min_seconds"]
+    if t.get("dependency_rules"):
+        cfg.temporal.dependency_rules = t["dependency_rules"]
 
     e = raw.get("entities", {})
     if e.get("extract"):
