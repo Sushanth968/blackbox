@@ -1,30 +1,39 @@
 import uuid
 import os
-import sys
+import importlib.util
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import delete, select
 from models.evidence_file import EvidenceFile
 from models.event import Event
 from models.flagged_event import FlaggedEvent
 from event_engine.normalizer import normalize_event
-from event_engine.secret_scanner import scrub_event
 
-# Make the repo-root `parsers` package importable without shadowing the stdlib.
-# Importing the parsers as top-level `json` / `csv` modules (with parsers/ at the
-# front of sys.path) shadows the standard library, which breaks both this module
-# and the parsers' own `import json` / `import csv`. Putting the repo root on the
-# path and importing them namespaced as `parsers.*` avoids the collision.
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if _REPO_ROOT not in sys.path:
-    sys.path.append(_REPO_ROOT)
+_PARSERS_DIR = os.path.join(_REPO_ROOT, "parsers")
 
-from parsers.json.parser import parse_json
-from parsers.json.jsonl_parser import parse_jsonl
-from parsers.csv.parser import parse_csv
-from parsers.logs.log_parser import parse_log
-from parsers.logs.git_parser import parse_git
-from parsers.logs.cicd_parser import parse_cicd
-from parsers.logs.syslog_parser import parse_syslog
+# Load parsers directly by file path to avoid stdlib name collisions (json, csv)
+def _load(rel: str):
+    path = os.path.join(_PARSERS_DIR, rel)
+    spec = importlib.util.spec_from_file_location(rel.replace(os.sep, ".").rstrip(".py"), path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+_json_mod      = _load(os.path.join("json", "parser.py"))
+_jsonl_mod     = _load(os.path.join("json", "jsonl_parser.py"))
+_csv_mod       = _load(os.path.join("csv", "parser.py"))
+_log_mod       = _load(os.path.join("logs", "log_parser.py"))
+_git_mod       = _load(os.path.join("logs", "git_parser.py"))
+_cicd_mod      = _load(os.path.join("logs", "cicd_parser.py"))
+_syslog_mod    = _load(os.path.join("logs", "syslog_parser.py"))
+
+parse_json    = _json_mod.parse_json
+parse_jsonl   = _jsonl_mod.parse_jsonl
+parse_csv     = _csv_mod.parse_csv
+parse_log     = _log_mod.parse_log
+parse_git     = _git_mod.parse_git
+parse_cicd    = _cicd_mod.parse_cicd
+parse_syslog  = _syslog_mod.parse_syslog
 
 PARSERS = {
     "json": parse_json,
