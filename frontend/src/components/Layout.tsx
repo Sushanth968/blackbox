@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Search, FolderSearch, Library, LayoutGrid, Settings, HelpCircle, Bell, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Search, FolderSearch, Library, LayoutGrid, Settings, HelpCircle, Bell, ChevronDown, Github } from 'lucide-react'
 import clsx from 'clsx'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -39,6 +39,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <NavItem to="/investigations" icon={<FolderSearch size={15} />} label="Investigations" active={pathname.startsWith('/investigations')} />
           <NavItem to="/evidence" icon={<Library size={15} />} label="Evidence library" active={pathname === '/evidence'} />
           <NavItem to="/workspaces" icon={<LayoutGrid size={15} />} label="Workspaces" active={pathname === '/workspaces'} />
+          <NavItem to="/github-issues" icon={<Github size={15} />} label="GitHub Issues" active={pathname === '/github-issues'} />
         </nav>
 
         {/* Bottom nav */}
