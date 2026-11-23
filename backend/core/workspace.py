@@ -42,6 +42,23 @@ class EntityConfig:
 
 
 @dataclass
+class CorrelationConfig:
+    enabled: bool = True
+    # Max time gap (seconds) across which two events may be causally linked.
+    max_window_seconds: float = 3600.0
+    shared_identifier_confidence: float = 0.75
+    causal_rule_confidence: float = 0.85
+    # Event fields whose shared value chains events in time order. The special
+    # value "ip" chains on addresses collected in event.extra["ips"].
+    identifier_fields: list = field(default_factory=lambda: ["object", "ip"])
+    # Declarative causal rules, same predicate shape as temporal.dependency_rules:
+    #   {name, cause: {<field>: <value>}, effect: {<field>: <value>},
+    #    scope: [<field>...], max_lag_seconds: <float|null>}
+    # Each effect is linked to its nearest preceding cause in the same scope.
+    rules: list = field(default_factory=list)
+
+
+@dataclass
 class ExportConfig:
     include_raw: bool = True
     report_raw_max_length: int = 200
@@ -58,6 +75,7 @@ class WorkspaceConfig:
     parsers: ParserConfig = field(default_factory=ParserConfig)
     temporal: TemporalConfig = field(default_factory=TemporalConfig)
     entities: EntityConfig = field(default_factory=EntityConfig)
+    correlation: "CorrelationConfig" = field(default_factory=lambda: CorrelationConfig())
     export: ExportConfig = field(default_factory=ExportConfig)
 
 
@@ -109,6 +127,20 @@ def load_workspace_config(path: Optional[str] = None) -> WorkspaceConfig:
         cfg.entities.aliases = e["aliases"]
     if e.get("ignore"):
         cfg.entities.ignore = e["ignore"]
+
+    c = raw.get("correlation", {})
+    if c.get("enabled") is not None:
+        cfg.correlation.enabled = c["enabled"]
+    if c.get("max_window_seconds") is not None:
+        cfg.correlation.max_window_seconds = c["max_window_seconds"]
+    if c.get("shared_identifier_confidence") is not None:
+        cfg.correlation.shared_identifier_confidence = c["shared_identifier_confidence"]
+    if c.get("causal_rule_confidence") is not None:
+        cfg.correlation.causal_rule_confidence = c["causal_rule_confidence"]
+    if c.get("identifier_fields"):
+        cfg.correlation.identifier_fields = c["identifier_fields"]
+    if c.get("rules"):
+        cfg.correlation.rules = c["rules"]
 
     ex = raw.get("export", {})
     if ex.get("include_raw") is not None:

@@ -32,6 +32,24 @@ entities:
   extract: [user, ip, email, path, url, hash]
   ignore: []
 
+correlation:
+  enabled: true
+  max_window_seconds: 3600
+  shared_identifier_confidence: 0.75
+  causal_rule_confidence: 0.85
+  identifier_fields: [object, ip]
+  rules:
+    - name: build-caused-deploy
+      cause: {action: build}
+      effect: {action: deploy}
+      scope: [object]
+      max_lag_seconds: 1800
+    - name: deploy-caused-error
+      cause: {action: deploy}
+      effect: {severity: error}
+      scope: []
+      max_lag_seconds: 600
+
 export:
   include_raw: true
   report_raw_max_length: 200

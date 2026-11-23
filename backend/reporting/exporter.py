@@ -11,7 +11,9 @@ from models.entity import Entity
 from models.relationship import Relationship
 from models.note import Note
 from models.flagged_event import FlaggedEvent
+from models.causal_link import CausalLink
 from temporal_engine.temporal import detect_conflicts
+from correlation_engine.linking import rank_root_causes
 
 
 async def build_export(investigation_id: uuid.UUID, db: AsyncSession) -> dict:
@@ -25,9 +27,22 @@ async def build_export(investigation_id: uuid.UUID, db: AsyncSession) -> dict:
     rels     = (await db.execute(select(Relationship).where(Relationship.investigation_id == investigation_id))).scalars().all()
     notes    = (await db.execute(select(Note).where(Note.investigation_id == investigation_id).order_by(Note.created_at.asc()))).scalars().all()
     flags    = (await db.execute(select(FlaggedEvent).where(FlaggedEvent.investigation_id == investigation_id))).scalars().all()
+    links    = (await db.execute(select(CausalLink).where(CausalLink.investigation_id == investigation_id).order_by(CausalLink.confidence.desc()))).scalars().all()
 
     flagged_ids = {str(f.event_id) for f in flags}
     conflicts = detect_conflicts(events)
+
+    # Causal links inferred by the correlation engine, plus ranked root-cause
+    # candidates derived from the resulting event graph.
+    link_dicts = [{"source_event_id": l.source_event_id, "target_event_id": l.target_event_id} for l in links]
+    root_causes = rank_root_causes(events, link_dicts)
+    event_summaries = {e.id: e for e in events}
+
+    def _event_label(eid) -> str:
+        e = event_summaries.get(eid)
+        if e is None:
+            return "event"
+        return " ".join(str(p) for p in (e.action, e.object) if p) or (e.raw or "event")[:60]
 
     # Secret/credential findings recorded by the ingestion scanner live in
     # event.extra["secrets"]. Surface them as an investigation-level summary.
@@ -59,6 +74,7 @@ async def build_export(investigation_id: uuid.UUID, db: AsyncSession) -> dict:
             "entities": len(entities),
             "relationships": len(rels),
             "temporal_conflicts": len(conflicts),
+            "causal_links": len(links),
             "notes": len(notes),
         },
         "evidence_files": [
@@ -127,6 +143,23 @@ async def build_export(investigation_id: uuid.UUID, db: AsyncSession) -> dict:
             }
             for f in flags
         ],
+        "causal_links": [
+            {
+                "source_event_id": str(l.source_event_id),
+                "target_event_id": str(l.target_event_id),
+                "source_label": _event_label(l.source_event_id),
+                "target_label": _event_label(l.target_event_id),
+                "relation": l.relation,
+                "link_type": l.link_type,
+                "confidence": l.confidence,
+                "basis": l.basis,
+            }
+            for l in links
+        ],
+        "root_causes": [
+            {"event_id": str(r["event_id"]), "reach": r["reach"], "summary": r["summary"]}
+            for r in root_causes
+        ],
     }
 
 
@@ -152,6 +185,7 @@ def render_text_report(data: dict) -> str:
         f"  Entities           : {s.get('entities')}",
         f"  Relationships      : {s.get('relationships')}",
         f"  Temporal conflicts : {s.get('temporal_conflicts')}",
+        f"  Causal links       : {s.get('causal_links')}",
         f"  Notes              : {s.get('notes')}",
         "",
     ]
@@ -204,6 +238,26 @@ def render_text_report(data: dict) -> str:
                 lines.append(f"  {ts[:19]}  {ev.get('severity','?'):8s}  {actor:20s}  {action:15s}  {obj}")
                 if label:
                     lines.append(f"    Label: {label}")
+        lines.append("")
+
+    root_causes = data.get("root_causes", [])
+    if root_causes:
+        lines += ["ROOT-CAUSE CANDIDATES", "-" * 40]
+        for r in root_causes:
+            lines.append(f"  reach {r.get('reach')!s:>4}  {r.get('summary')}")
+        lines.append("")
+
+    causal_links = data.get("causal_links", [])
+    if causal_links:
+        lines += ["CAUSAL LINKS", "-" * 40]
+        for l in causal_links:
+            conf = l.get("confidence")
+            lines.append(
+                f"  [{l.get('link_type','?'):17s}] {l.get('source_label')} → {l.get('target_label')}"
+                f"  (conf {conf})"
+            )
+            if l.get("basis"):
+                lines.append(f"    {l['basis']}")
         lines.append("")
 
     notes = data.get("notes", [])

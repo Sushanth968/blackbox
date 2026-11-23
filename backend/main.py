@@ -19,6 +19,7 @@ import models.entity
 import models.relationship
 import models.note
 import models.flagged_event
+import models.causal_link
 
 app = FastAPI(title="BlackBox", version="0.1.0", description="Evidence-driven event reconstruction platform")
 

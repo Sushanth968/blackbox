@@ -11,11 +11,14 @@ from models.entity import Entity
 from models.relationship import Relationship
 from models.note import Note
 from models.flagged_event import FlaggedEvent
+from models.causal_link import CausalLink
 from schemas.event import EventOut, TimelineOut
 from schemas.entity import EntityOut, GraphOut, RelationshipOut
+from schemas.causal import CausalLinkOut
 from schemas.workspace import NoteCreate, NoteOut, FlagCreate, FlagOut
 from temporal_engine.temporal import detect_conflicts
 from relationship_engine.resolver import resolve_entities
+from correlation_engine.correlator import correlate_events
 from reporting.exporter import build_export, render_text_report
 
 router = APIRouter()
@@ -73,6 +76,22 @@ async def get_graph(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_
         nodes=nodes_result.scalars().all(),
         edges=edges_result.scalars().all(),
     )
+
+# ── Causal correlation ───────────────────────────────────────────────────────
+
+@router.post("/{investigation_id}/correlate", response_model=dict)
+async def trigger_correlate(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    return await correlate_events(investigation_id, db)
+
+
+@router.get("/{investigation_id}/causal-links", response_model=list[CausalLinkOut])
+async def list_causal_links(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(CausalLink)
+        .where(CausalLink.investigation_id == investigation_id)
+        .order_by(CausalLink.confidence.desc())
+    )
+    return result.scalars().all()
 
 # ── Notes ───────────────────────────────────────────────────────────────────
 

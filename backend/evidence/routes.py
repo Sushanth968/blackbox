@@ -9,6 +9,7 @@ from schemas.evidence import EvidenceFileOut
 from core.config import settings
 from ingestion.processor import process_evidence_file, reprocess_evidence_file
 from relationship_engine.resolver import resolve_entities
+from correlation_engine.correlator import correlate_events
 
 router = APIRouter()
 
@@ -53,6 +54,7 @@ async def upload_evidence(
     await process_evidence_file(ev.id, dest, ext, investigation_id, db)
     await db.refresh(ev)
     await resolve_entities(investigation_id, db)
+    await correlate_events(investigation_id, db)
     return ev
 
 @router.get("/{investigation_id}/evidence", response_model=list[EvidenceFileOut])
@@ -81,4 +83,5 @@ async def reprocess_evidence(investigation_id: uuid.UUID, evidence_id: uuid.UUID
     await reprocess_evidence_file(evidence_id, file_path, ev.file_type or "log", investigation_id, db)
     await db.refresh(ev)
     await resolve_entities(investigation_id, db)
+    await correlate_events(investigation_id, db)
     return ev
