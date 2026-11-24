@@ -12,7 +12,7 @@ from models.relationship import Relationship
 from models.note import Note
 from models.flagged_event import FlaggedEvent
 from models.evidence_file import EvidenceFile
-from schemas.event import EventOut, TimelineOut, ConfidenceOut
+from schemas.event import EventOut, TimelineOut, ConfidenceOut, EventLabelUpdate
 from schemas.entity import EntityOut, GraphOut, RelationshipOut
 from schemas.workspace import NoteCreate, NoteOut, FlagCreate, FlagOut
 from temporal_engine.temporal import detect_conflicts
@@ -100,6 +100,26 @@ async def get_gaps(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_d
     events = result.scalars().all()
     gaps = detect_gaps(events)
     return {"gaps": gaps, "total": len(gaps)}
+
+# ── Event label (hypothesis pinning) ─────────────────────────────────────────
+
+@router.patch("/{investigation_id}/events/{event_id}/label", response_model=EventOut)
+async def label_event(
+    investigation_id: uuid.UUID,
+    event_id: uuid.UUID,
+    payload: EventLabelUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    event = await db.get(Event, event_id)
+    if not event or event.investigation_id != investigation_id:
+        raise HTTPException(404, "Event not found")
+    valid = {None, "fact", "inference", "hypothesis"}
+    if payload.label_type not in valid:
+        raise HTTPException(400, f"label_type must be one of: {valid - {None}}")
+    event.label_type = payload.label_type
+    await db.commit()
+    await db.refresh(event)
+    return event
 
 # ── Entities & Graph ────────────────────────────────────────────────────────
 

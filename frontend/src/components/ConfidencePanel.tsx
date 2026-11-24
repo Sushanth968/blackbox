@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { Shield, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Shield, AlertTriangle, ChevronDown, ChevronUp, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../services/api'
 import type { ConfidenceScore } from '../services/types'
@@ -11,6 +11,14 @@ const LABEL_COLORS = {
   Low:      { ring: 'stroke-danger',   bg: 'bg-danger',      text: 'text-danger',       badge: 'bg-danger/15 text-danger border-danger/30' },
   Critical: { ring: 'stroke-red-600',  bg: 'bg-red-600',     text: 'text-red-500',      badge: 'bg-red-600/15 text-red-400 border-red-500/30' },
 }
+
+const LABEL_TYPE_STYLES: Record<string, string> = {
+  fact:        'bg-success/15 text-success border-success/30',
+  inference:   'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  hypothesis:  'bg-warning/15 text-warning border-warning/30',
+}
+
+const LABEL_TYPES = ['fact', 'inference', 'hypothesis'] as const
 
 export default function ConfidencePanel({ investigationId }: { investigationId: string }) {
   const [showDimensions, setShowDimensions] = useState(false)
@@ -120,6 +128,71 @@ export default function ConfidencePanel({ investigationId }: { investigationId: 
               </div>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function EventLabelBadge({
+  eventId, investigationId, currentLabel
+}: {
+  eventId: string
+  investigationId: string
+  currentLabel: string | null
+}) {
+  const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
+
+  const setLabel = useMutation({
+    mutationFn: (label_type: string | null) =>
+      api.patch(`/investigations/${investigationId}/events/${eventId}/label`, { label_type }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['timeline', investigationId] })
+      setOpen(false)
+    },
+  })
+
+  return (
+    <div className="relative">
+      <button
+        onClick={e => { e.stopPropagation(); setOpen(v => !v) }}
+        className={clsx(
+          'text-[9px] px-1.5 py-0.5 rounded border font-medium transition-colors',
+          currentLabel ? LABEL_TYPE_STYLES[currentLabel] : 'border-border text-subtle hover:text-muted'
+        )}
+      >
+        {currentLabel ?? 'label'}
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-5 z-20 bg-panel border border-border rounded-lg shadow-xl min-w-[110px] overflow-hidden"
+          onClick={e => e.stopPropagation()}
+        >
+          {LABEL_TYPES.map(lt => (
+            <button
+              key={lt}
+              onClick={() => setLabel.mutate(lt)}
+              className={clsx(
+                'w-full flex items-center gap-2 px-3 py-2 text-[10px] hover:bg-white/5 transition-colors capitalize',
+                currentLabel === lt ? LABEL_TYPE_STYLES[lt] + ' font-medium' : 'text-muted'
+              )}
+            >
+              <span className={clsx('w-1.5 h-1.5 rounded-full flex-shrink-0',
+                lt === 'fact' ? 'bg-success' : lt === 'inference' ? 'bg-purple-400' : 'bg-warning'
+              )} />
+              {lt}
+            </button>
+          ))}
+          {currentLabel && (
+            <button
+              onClick={() => setLabel.mutate(null)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-subtle hover:text-white hover:bg-white/5 transition-colors border-t border-border"
+            >
+              <XCircle size={10} />
+              Remove label
+            </button>
+          )}
         </div>
       )}
     </div>

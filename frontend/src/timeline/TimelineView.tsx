@@ -8,8 +8,7 @@ import type { TimelineResponse, Event, Conflict } from '../services/types'
 import { format } from 'date-fns'
 import clsx from 'clsx'
 import { api } from '../services/api'
-
-const SEV_BADGE: Record<string, string> = {
+import { EventLabelBadge } from '../components/ConfidencePanel': Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
   error:    'bg-red-400/15 text-red-400 border-red-400/25',
   warning:  'bg-warning/15 text-warning border-warning/25',
@@ -275,6 +274,11 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
                               {ev.severity}
                             </span>
                           )}
+                          <EventLabelBadge
+                            eventId={ev.id}
+                            investigationId={investigationId}
+                            currentLabel={ev.label_type}
+                          />
                           <button
                             onClick={e => { e.stopPropagation(); isFlagged ? unflagEvent.mutate(flagMap[ev.id]) : flagEvent.mutate(ev.id) }}
                             className={clsx(

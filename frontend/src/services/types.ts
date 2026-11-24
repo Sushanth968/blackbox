@@ -32,6 +32,7 @@ export interface Event {
   raw: string | null
   source_line: number | null
   extra: Record<string, unknown> | null
+  label_type: string | null  // "fact" | "inference" | "hypothesis" | null
 }
 
 export interface TimelineResponse {

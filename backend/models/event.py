@@ -23,6 +23,7 @@ class Event(Base):
     raw: Mapped[Optional[str]] = mapped_column(Text)
     source_line: Mapped[Optional[int]] = mapped_column(Integer)
     extra: Mapped[Optional[dict]] = mapped_column(JSON)
+    label_type: Mapped[Optional[str]] = mapped_column(String(50))  # fact | inference | hypothesis
 
     investigation: Mapped["Investigation"] = relationship(back_populates="events")
     evidence_file: Mapped["EvidenceFile"] = relationship(back_populates="events")
