@@ -17,9 +17,13 @@ class EventOut(BaseModel):
     raw: Optional[str]
     source_line: Optional[int]
     extra: Optional[dict]
+    label_type: Optional[str]
 
     class Config:
         from_attributes = True
+
+class EventLabelUpdate(BaseModel):
+    label_type: Optional[str]  # "fact" | "inference" | "hypothesis" | None
 
 class TimelineOut(BaseModel):
     events: list[EventOut]
