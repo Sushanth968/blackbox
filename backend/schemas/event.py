@@ -25,3 +25,17 @@ class TimelineOut(BaseModel):
     events: list[EventOut]
     conflicts: list[dict]
     total: int
+
+class ConfidenceDimensionOut(BaseModel):
+    name: str
+    score: float
+    weight: float
+    detail: str
+    penalty: float
+
+class ConfidenceOut(BaseModel):
+    overall: float
+    label: str
+    summary: str
+    dimensions: list[ConfidenceDimensionOut]
+    gaps: list[dict]
