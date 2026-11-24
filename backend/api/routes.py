@@ -11,10 +11,13 @@ from models.entity import Entity
 from models.relationship import Relationship
 from models.note import Note
 from models.flagged_event import FlaggedEvent
-from schemas.event import EventOut, TimelineOut
+from models.evidence_file import EvidenceFile
+from schemas.event import EventOut, TimelineOut, ConfidenceOut
 from schemas.entity import EntityOut, GraphOut, RelationshipOut
 from schemas.workspace import NoteCreate, NoteOut, FlagCreate, FlagOut
 from temporal_engine.temporal import detect_conflicts
+from temporal_engine.gaps import detect_gaps
+from temporal_engine.confidence import compute_confidence
 from relationship_engine.resolver import resolve_entities
 from reporting.exporter import build_export, render_text_report
 
@@ -53,6 +56,50 @@ async def get_timeline(investigation_id: uuid.UUID, db: AsyncSession = Depends(g
     events = result.scalars().all()
     conflicts = detect_conflicts(events)
     return TimelineOut(events=events, conflicts=conflicts, total=len(events))
+
+# ── Confidence score ─────────────────────────────────────────────────────────
+
+@router.get("/{investigation_id}/confidence", response_model=ConfidenceOut)
+async def get_confidence(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    events_result = await db.execute(
+        select(Event)
+        .where(Event.investigation_id == investigation_id)
+        .order_by(Event.timestamp.asc().nullslast())
+    )
+    events = events_result.scalars().all()
+
+    files_result = await db.execute(
+        select(EvidenceFile).where(EvidenceFile.investigation_id == investigation_id)
+    )
+    evidence_files = files_result.scalars().all()
+
+    conflicts = detect_conflicts(events)
+    gaps = detect_gaps(events)
+    result = compute_confidence(events, evidence_files, conflicts, gaps)
+
+    return ConfidenceOut(
+        overall=result.overall,
+        label=result.label,
+        summary=result.summary,
+        dimensions=[
+            {"name": d.name, "score": d.score, "weight": d.weight, "detail": d.detail, "penalty": d.penalty}
+            for d in result.dimensions
+        ],
+        gaps=result.gaps,
+    )
+
+# ── Evidence gaps ─────────────────────────────────────────────────────────────
+
+@router.get("/{investigation_id}/gaps")
+async def get_gaps(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Event)
+        .where(Event.investigation_id == investigation_id)
+        .order_by(Event.timestamp.asc().nullslast())
+    )
+    events = result.scalars().all()
+    gaps = detect_gaps(events)
+    return {"gaps": gaps, "total": len(gaps)}
 
 # ── Entities & Graph ────────────────────────────────────────────────────────
 

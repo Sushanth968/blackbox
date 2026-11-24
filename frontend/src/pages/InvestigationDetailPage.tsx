@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2, ChevronRight, FileText, List, AlertTriangle, Share2, FileOutput, Plus } from 'lucide-react'
+import { Loader2, ChevronRight, FileText, List, AlertTriangle, Share2, FileOutput, Plus, Shield } from 'lucide-react'
 import { api } from '../services/api'
-import type { Investigation, TimelineResponse, EvidenceFile } from '../services/types'
+import type { Investigation, TimelineResponse, EvidenceFile, ConfidenceScore } from '../services/types'
 import EvidencePanel from '../components/EvidencePanel'
 import TimelineView from '../timeline/TimelineView'
 import EntityGraph from '../graph/EntityGraph'
 import WorkspacePanel from '../components/WorkspacePanel'
 import ExportPanel from '../components/ExportPanel'
+import ConfidencePanel from '../components/ConfidencePanel'
 import clsx from 'clsx'
 
 type Tab = 'overview' | 'timeline' | 'evidence' | 'relationships' | 'anomalies' | 'report'
@@ -49,6 +50,13 @@ export default function InvestigationDetailPage() {
     queryFn: () => api.get(`/investigations/${id}/evidence`).then(r => r.data),
     enabled: !!id,
     refetchInterval: 3000,
+  })
+
+  const { data: confidence } = useQuery<ConfidenceScore>({
+    queryKey: ['confidence', id],
+    queryFn: () => api.get(`/investigations/${id}/confidence`).then(r => r.data),
+    enabled: !!id,
+    refetchInterval: 10000,
   })
 
   if (isLoading) return (
@@ -117,6 +125,14 @@ export default function InvestigationDetailPage() {
           {conflictCount > 0 && (
             <StatChip icon={<AlertTriangle size={12} />} label={`${conflictCount} anomal${conflictCount !== 1 ? 'ies' : 'y'}`} variant="warning" />
           )}
+          {confidence && (
+            <StatChip
+              icon={<Shield size={12} />}
+              label={`${Math.round(confidence.overall)}% confidence`}
+              variant={confidence.label === 'High' ? 'success' : confidence.label === 'Medium' ? 'warning' : 'danger'}
+              onClick={() => setTab('overview')}
+            />
+          )}
         </div>
       </div>
 
@@ -162,7 +178,10 @@ export default function InvestigationDetailPage() {
         {tab === 'overview' && (
           <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-5 max-w-5xl">
             <EvidencePanel investigationId={id!} />
-            <WorkspacePanel investigationId={id!} />
+            <div className="space-y-5">
+              <ConfidencePanel investigationId={id!} />
+              <WorkspacePanel investigationId={id!} />
+            </div>
           </div>
         )}
         {tab === 'anomalies' && (
@@ -175,17 +194,22 @@ export default function InvestigationDetailPage() {
   )
 }
 
-function StatChip({ icon, label, variant }: { icon: React.ReactNode; label: string; variant?: 'warning' }) {
+function StatChip({ icon, label, variant, onClick }: { icon: React.ReactNode; label: string; variant?: 'warning' | 'success' | 'danger'; onClick?: () => void }) {
   return (
-    <span className={clsx(
-      'flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium',
-      variant === 'warning'
-        ? 'bg-warning/10 border-warning/25 text-warning'
+    <button
+      onClick={onClick}
+      className={clsx(
+        'flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors',
+        onClick ? 'cursor-pointer hover:opacity-80' : 'cursor-default',
+        variant === 'warning' ? 'bg-warning/10 border-warning/25 text-warning'
+        : variant === 'success' ? 'bg-success/10 border-success/25 text-success'
+        : variant === 'danger'  ? 'bg-danger/10 border-danger/25 text-danger'
         : 'bg-panel-2 border-border text-muted'
-    )}>
+      )}
+    >
       {icon}
       {label}
-    </span>
+    </button>
   )
 }
 

@@ -90,3 +90,28 @@ export interface FlaggedEvent {
   label: string | null
   flagged_at: string
 }
+
+export interface ConfidenceDimension {
+  name: string
+  score: number
+  weight: number
+  detail: string
+  penalty: number
+}
+
+export interface ConfidenceScore {
+  overall: number
+  label: string
+  summary: string
+  dimensions: ConfidenceDimension[]
+  gaps: EvidenceGap[]
+}
+
+export interface EvidenceGap {
+  start_time: string
+  end_time: string
+  duration_seconds: number
+  before_event_id: string
+  after_event_id: string
+  description: string
+}
