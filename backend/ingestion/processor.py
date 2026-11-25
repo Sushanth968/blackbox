@@ -7,6 +7,7 @@ from models.evidence_file import EvidenceFile
 from models.event import Event
 from models.flagged_event import FlaggedEvent
 from event_engine.normalizer import normalize_event
+from event_engine.secret_scanner import scrub_event
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 _PARSERS_DIR = os.path.join(_REPO_ROOT, "parsers")
