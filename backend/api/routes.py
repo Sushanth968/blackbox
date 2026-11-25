@@ -12,6 +12,7 @@ from models.relationship import Relationship
 from models.note import Note
 from models.flagged_event import FlaggedEvent
 from models.evidence_file import EvidenceFile
+from models.investigation import Investigation
 from schemas.event import EventOut, TimelineOut, ConfidenceOut, EventLabelUpdate
 from schemas.entity import EntityOut, GraphOut, RelationshipOut
 from schemas.workspace import NoteCreate, NoteOut, FlagCreate, FlagOut
@@ -234,3 +235,76 @@ async def export_report(investigation_id: uuid.UUID, db: AsyncSession = Depends(
         media_type="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="blackbox-report-{investigation_id}.txt"'},
     )
+
+# ── Global evidence library ──────────────────────────────────────────────────
+
+global_router = APIRouter()
+
+@global_router.get("/evidence", response_model=list[dict])
+async def list_all_evidence(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(EvidenceFile, Investigation.title)
+        .join(Investigation, EvidenceFile.investigation_id == Investigation.id)
+        .order_by(EvidenceFile.uploaded_at.desc())
+    )
+    rows = result.all()
+    return [
+        {
+            "id": str(ev.id),
+            "investigation_id": str(ev.investigation_id),
+            "investigation_title": title,
+            "original_name": ev.original_name,
+            "file_type": ev.file_type,
+            "file_size": ev.file_size,
+            "sha256": ev.sha256,
+            "status": ev.status,
+            "uploaded_at": ev.uploaded_at.isoformat() if ev.uploaded_at else None,
+        }
+        for ev, title in rows
+    ]
+
+@global_router.get("/workspaces", response_model=list[dict])
+async def list_all_workspaces(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Investigation).order_by(Investigation.created_at.desc())
+    )
+    investigations = result.scalars().all()
+
+    out = []
+    for inv in investigations:
+        notes_result = await db.execute(
+            select(Note).where(Note.investigation_id == inv.id).order_by(Note.created_at.asc())
+        )
+        notes = notes_result.scalars().all()
+
+        flags_result = await db.execute(
+            select(FlaggedEvent).where(FlaggedEvent.investigation_id == inv.id)
+        )
+        flags = flags_result.scalars().all()
+
+        evidence_result = await db.execute(
+            select(EvidenceFile).where(EvidenceFile.investigation_id == inv.id)
+        )
+        evidence = evidence_result.scalars().all()
+
+        out.append({
+            "id": str(inv.id),
+            "title": inv.title,
+            "description": inv.description,
+            "status": inv.status,
+            "created_at": inv.created_at.isoformat() if inv.created_at else None,
+            "updated_at": inv.updated_at.isoformat() if inv.updated_at else None,
+            "note_count": len(notes),
+            "flag_count": len(flags),
+            "evidence_count": len(evidence),
+            "notes": [
+                {
+                    "id": str(n.id),
+                    "content": n.content,
+                    "author": n.author,
+                    "created_at": n.created_at.isoformat() if n.created_at else None,
+                }
+                for n in notes
+            ],
+        })
+    return out
