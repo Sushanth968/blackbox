@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Upload, FileText, Loader2, CheckCircle, AlertCircle, Clock, RefreshCw } from 'lucide-react'
+import { Upload, FileText, Loader2, CheckCircle, AlertCircle, Clock, RefreshCw, Trash2 } from 'lucide-react'
 import { api } from '../services/api'
 import type { EvidenceFile } from '../services/types'
 
@@ -43,6 +43,16 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['evidence', investigationId] })
       qc.invalidateQueries({ queryKey: ['timeline', investigationId] })
+    },
+  })
+
+  const remove = useMutation({
+    mutationFn: (evidenceId: string) =>
+      api.delete(`/investigations/${investigationId}/evidence/${evidenceId}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['evidence', investigationId] })
+      qc.invalidateQueries({ queryKey: ['timeline', investigationId] })
+      qc.invalidateQueries({ queryKey: ['confidence', investigationId] })
     },
   })
 
@@ -107,6 +117,13 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
                     <RefreshCw size={13} />
                   </button>
                 )}
+                <button
+                  onClick={() => remove.mutate(f.id)}
+                  title="Delete"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-danger"
+                >
+                  <Trash2 size={13} />
+                </button>
                 {STATUS_ICON[f.status as keyof typeof STATUS_ICON]}
               </div>
             </div>
