@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, FolderSearch, Loader2, ChevronRight } from 'lucide-react'
+import { Plus, FolderSearch, Loader2, ChevronRight, Trash2 } from 'lucide-react'
 import { api } from '../services/api'
 import type { Investigation } from '../services/types'
 import { format } from 'date-fns'
@@ -18,6 +18,7 @@ export default function InvestigationsPage() {
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const { data: investigations, isLoading } = useQuery<Investigation[]>({
     queryKey: ['investigations'],
@@ -33,6 +34,15 @@ export default function InvestigationsPage() {
       setTitle('')
       setDescription('')
     },
+  })
+
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/investigations/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['investigations'] })
+      setConfirmDelete(null)
+    },
+  })
   })
 
   return (
@@ -105,36 +115,70 @@ export default function InvestigationsPage() {
           {investigations?.map(inv => {
             const statusKey = inv.status
             return (
-              <Link
-                key={inv.id}
-                to={`/investigations/${inv.id}`}
-                className="flex items-center gap-4 bg-panel border border-border hover:border-border-2 rounded-xl px-5 py-4 transition-all group"
-              >
-                {/* Icon */}
-                <div className="w-9 h-9 rounded-lg bg-panel-2 border border-border flex items-center justify-center flex-shrink-0">
-                  <FolderSearch size={15} className="text-muted group-hover:text-accent transition-colors" />
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-medium text-white group-hover:text-accent transition-colors truncate">{inv.title}</h3>
-                    <span className={clsx('text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1', STATUS_STYLES[statusKey] || STATUS_STYLES.open)}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-                      {inv.status.replace('_', ' ')}
-                    </span>
+              <div key={inv.id} className="relative group">
+                <Link
+                  to={`/investigations/${inv.id}`}
+                  className="flex items-center gap-4 bg-panel border border-border hover:border-border-2 rounded-xl px-5 py-4 transition-all"
+                >
+                  {/* Icon */}
+                  <div className="w-9 h-9 rounded-lg bg-panel-2 border border-border flex items-center justify-center flex-shrink-0">
+                    <FolderSearch size={15} className="text-muted group-hover:text-accent transition-colors" />
                   </div>
-                  {inv.description && (
-                    <p className="text-xs text-muted mt-0.5 truncate">{inv.description}</p>
-                  )}
-                  <p className="text-[10px] text-subtle mt-1">{format(new Date(inv.created_at), 'MMM d, yyyy · HH:mm')}</p>
-                </div>
 
-                {/* Arrow */}
-                <ChevronRight size={14} className="text-subtle group-hover:text-muted transition-colors flex-shrink-0" />
-              </Link>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-medium text-white group-hover:text-accent transition-colors truncate">{inv.title}</h3>
+                      <span className={clsx('text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1', STATUS_STYLES[statusKey] || STATUS_STYLES.open)}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                        {inv.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    {inv.description && (
+                      <p className="text-xs text-muted mt-0.5 truncate">{inv.description}</p>
+                    )}
+                    <p className="text-[10px] text-subtle mt-1">{format(new Date(inv.created_at), 'MMM d, yyyy · HH:mm')}</p>
+                  </div>
+
+                  <ChevronRight size={14} className="text-subtle group-hover:text-muted transition-colors flex-shrink-0" />
+                </Link>
+
+                {/* Delete button — appears on hover */}
+                <button
+                  onClick={e => { e.preventDefault(); setConfirmDelete(inv.id) }}
+                  title="Delete investigation"
+                  className="absolute right-12 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-subtle hover:text-danger hover:bg-danger/10 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Delete confirm dialog */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-panel border border-border rounded-xl p-5 w-80 shadow-2xl">
+            <h3 className="text-sm font-semibold text-white mb-1">Delete investigation?</h3>
+            <p className="text-xs text-muted mb-4">This will permanently delete the investigation, all evidence files, events, notes and flags. This cannot be undone.</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="px-3 py-1.5 text-xs text-muted hover:text-white bg-panel-2 border border-border rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => remove.mutate(confirmDelete)}
+                disabled={remove.isPending}
+                className="px-3 py-1.5 text-xs text-white bg-danger hover:bg-danger/80 disabled:opacity-50 rounded-md transition-colors"
+              >
+                {remove.isPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
