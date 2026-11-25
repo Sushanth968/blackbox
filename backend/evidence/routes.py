@@ -1,9 +1,11 @@
 import uuid, hashlib, os
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from db.session import get_db
 from models.evidence_file import EvidenceFile
+from models.event import Event
+from models.flagged_event import FlaggedEvent
 from models.investigation import Investigation
 from schemas.evidence import EvidenceFileOut
 from core.config import settings
@@ -80,6 +82,15 @@ async def delete_evidence(investigation_id: uuid.UUID, evidence_id: uuid.UUID, d
     ev = await db.get(EvidenceFile, evidence_id)
     if not ev or ev.investigation_id != investigation_id:
         raise HTTPException(404, "Evidence file not found")
+
+    event_ids = select(Event.id).where(Event.evidence_file_id == evidence_id)
+    await db.execute(delete(FlaggedEvent).where(FlaggedEvent.event_id.in_(event_ids)))
+    await db.execute(delete(Event).where(Event.evidence_file_id == evidence_id))
+
+    file_path = os.path.join(settings.UPLOAD_DIR, str(investigation_id), ev.filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
     await db.delete(ev)
     await db.commit()
 
