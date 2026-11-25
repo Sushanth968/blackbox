@@ -93,6 +93,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [severityFilter, setSeverityFilter] = useState('all')
   const [actorFilter, setActorFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState<Set<string>>(new Set())
   const [chatInput, setChatInput] = useState('')
 
   const { data: flags = [] } = useQuery<{ id: string; event_id: string; label: string | null }[]>({
@@ -122,9 +123,24 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
 
   const actors = Array.from(new Set(timeline.events.map(e => e.actor).filter(Boolean))) as string[]
 
+  const toggleSource = (cat: string) => {
+    setSourceFilter(prev => {
+      const next = new Set(prev)
+      next.has(cat) ? next.delete(cat) : next.add(cat)
+      return next
+    })
+  }
+
+  const categoryCounts = timeline.events.reduce<Record<string, number>>((acc, e) => {
+    const cat = extractCategory(e)
+    acc[cat] = (acc[cat] ?? 0) + 1
+    return acc
+  }, {})
+
   const filtered = timeline.events.filter(e => {
     if (severityFilter !== 'all' && e.severity !== severityFilter) return false
     if (actorFilter !== 'all' && e.actor !== actorFilter) return false
+    if (sourceFilter.size > 0 && !sourceFilter.has(extractCategory(e))) return false
     return true
   })
 
