@@ -42,6 +42,43 @@ const SEV_ROW_ACTIVE: Record<string, string> = {
   debug:    'bg-muted/5 border-muted/15',
 }
 
+const CATEGORY_META: Record<string, { label: string; color: string; dot: string }> = {
+  github:   { label: 'GitHub',       color: 'bg-purple-500/15 text-purple-400 border-purple-500/30',  dot: 'bg-purple-400' },
+  cicd:     { label: 'CI/CD',        color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',         dot: 'bg-cyan-400' },
+  deploy:   { label: 'Deploy',       color: 'bg-blue-500/15 text-blue-400 border-blue-500/30',         dot: 'bg-blue-400' },
+  auth:     { label: 'Auth',         color: 'bg-green-500/15 text-green-400 border-green-500/30',      dot: 'bg-green-400' },
+  api:      { label: 'API',          color: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',   dot: 'bg-indigo-400' },
+  db:       { label: 'Database',     color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',   dot: 'bg-yellow-400' },
+  security: { label: 'Security',     color: 'bg-red-500/15 text-red-400 border-red-500/30',            dot: 'bg-red-400' },
+  cron:     { label: 'Cron / Jobs',  color: 'bg-muted/15 text-muted border-muted/30',                  dot: 'bg-muted' },
+  temporal: { label: 'Temporal',     color: 'bg-warning/15 text-warning border-warning/30',            dot: 'bg-warning' },
+  other:    { label: 'Other',        color: 'bg-panel-2 text-muted border-border',                     dot: 'bg-subtle' },
+}
+
+function extractCategory(event: Event): string {
+  const raw = (event.raw ?? '').toLowerCase()
+  const action = (event.action ?? '').toLowerCase()
+  const src = (event.source ?? '').toLowerCase()
+
+  if (raw.includes('[security]') || action.includes('port_scan') || action.includes('rate_limit') || action.includes('unauthorized'))
+    return 'security'
+  if (raw.includes('[deploy]') || action.includes('deploy') || action.includes('rollback') || action.includes('tag'))
+    return 'deploy'
+  if (raw.includes('[cicd]') || src.includes('cicd') || src.includes('ci_cd') || action.includes('build') || action.includes('pipeline'))
+    return 'cicd'
+  if (raw.includes('[auth]') || action.includes('login') || action.includes('logout') || action.includes('token') || action.includes('unlock'))
+    return 'auth'
+  if (raw.includes('[db]') || action.includes('migration') || action.includes('query') || action.includes('backup') || action.includes('vacuum') || action.includes('index'))
+    return 'db'
+  if (raw.includes('[cron]') || action.includes('cleanup') || action.includes('cron'))
+    return 'cron'
+  if (raw.includes('[temporal]') || action.includes('clock_skew'))
+    return 'temporal'
+  if (raw.includes('[api]') || src.includes('github') || action.includes('commit') || action.includes('push'))
+    return 'api'
+  return 'other'
+}
+
 const CONFLICT_LABEL: Record<string, string> = {
   out_of_order:         'Out of order',
   clock_skew:           'Clock skew',
