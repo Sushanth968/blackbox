@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Loader2, ChevronRight, FileText, List, AlertTriangle, Share2, FileOutput, Plus, Shield } from 'lucide-react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Loader2, ChevronRight, FileText, List, AlertTriangle, Share2, FileOutput, Plus, Shield, Trash2 } from 'lucide-react'
 import { api } from '../services/api'
 import type { Investigation, TimelineResponse, EvidenceFile, ConfidenceScore } from '../services/types'
 import EvidencePanel from '../components/EvidencePanel'
@@ -31,7 +31,10 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default function InvestigationDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
   const [tab, setTab] = useState<Tab>('timeline')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const { data: investigation, isLoading } = useQuery<Investigation>({
     queryKey: ['investigation', id],
@@ -57,6 +60,14 @@ export default function InvestigationDetailPage() {
     queryFn: () => api.get(`/investigations/${id}/confidence`).then(r => r.data),
     enabled: !!id,
     refetchInterval: 10000,
+  })
+
+  const removeInvestigation = useMutation({
+    mutationFn: () => api.delete(`/investigations/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['investigations'] })
+      navigate('/investigations')
+    },
   })
 
   if (isLoading) return (
@@ -115,8 +126,40 @@ export default function InvestigationDetailPage() {
               <FileOutput size={13} />
               Generate report
             </button>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              title="Delete investigation"
+              className="p-1.5 text-muted hover:text-danger hover:bg-danger/10 border border-border rounded-md transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
+
+        {/* Delete confirm dialog */}
+        {confirmDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <div className="bg-panel border border-border rounded-xl p-5 w-80 shadow-2xl">
+              <h3 className="text-sm font-semibold text-white mb-1">Delete investigation?</h3>
+              <p className="text-xs text-muted mb-4">This will permanently delete <span className="text-white font-medium">{investigation?.title}</span>, all evidence files, events, notes and flags. This cannot be undone.</p>
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="px-3 py-1.5 text-xs text-muted hover:text-white bg-panel-2 border border-border rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => removeInvestigation.mutate()}
+                  disabled={removeInvestigation.isPending}
+                  className="px-3 py-1.5 text-xs text-white bg-danger hover:bg-danger/80 disabled:opacity-50 rounded-md transition-colors"
+                >
+                  {removeInvestigation.isPending ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats chips */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
