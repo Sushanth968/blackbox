@@ -26,10 +26,11 @@ frontend/build/
 .env.*
 !.env.example
 
-# --- Evidence uploads (runtime data, not source) ---
+# --- Evidence uploads & local databases (runtime data, not source) ---
 /data/
-/uploads/
+uploads/
 *.sqlite3
+*.db
 
 # --- OS / editor ---
 .DS_Store
