@@ -8,7 +8,9 @@ import type { TimelineResponse, Event, Conflict } from '../services/types'
 import { format } from 'date-fns'
 import clsx from 'clsx'
 import { api } from '../services/api'
-import { EventLabelBadge } from '../components/ConfidencePanel': Record<string, string> = {
+import { EventLabelBadge } from '../components/ConfidencePanel'
+
+const SEV_BADGE: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-400 border-red-500/30',
   error:    'bg-red-400/15 text-red-400 border-red-400/25',
   warning:  'bg-warning/15 text-warning border-warning/25',
@@ -40,6 +42,43 @@ const SEV_ROW_ACTIVE: Record<string, string> = {
   debug:    'bg-muted/5 border-muted/15',
 }
 
+const CATEGORY_META: Record<string, { label: string; color: string; dot: string }> = {
+  github:   { label: 'GitHub',       color: 'bg-purple-500/15 text-purple-400 border-purple-500/30',  dot: 'bg-purple-400' },
+  cicd:     { label: 'CI/CD',        color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',         dot: 'bg-cyan-400' },
+  deploy:   { label: 'Deploy',       color: 'bg-blue-500/15 text-blue-400 border-blue-500/30',         dot: 'bg-blue-400' },
+  auth:     { label: 'Auth',         color: 'bg-green-500/15 text-green-400 border-green-500/30',      dot: 'bg-green-400' },
+  api:      { label: 'API',          color: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',   dot: 'bg-indigo-400' },
+  db:       { label: 'Database',     color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',   dot: 'bg-yellow-400' },
+  security: { label: 'Security',     color: 'bg-red-500/15 text-red-400 border-red-500/30',            dot: 'bg-red-400' },
+  cron:     { label: 'Cron / Jobs',  color: 'bg-muted/15 text-muted border-muted/30',                  dot: 'bg-muted' },
+  temporal: { label: 'Temporal',     color: 'bg-warning/15 text-warning border-warning/30',            dot: 'bg-warning' },
+  other:    { label: 'Other',        color: 'bg-panel-2 text-muted border-border',                     dot: 'bg-subtle' },
+}
+
+function extractCategory(event: Event): string {
+  const raw = (event.raw ?? '').toLowerCase()
+  const action = (event.action ?? '').toLowerCase()
+  const src = (event.source ?? '').toLowerCase()
+
+  if (raw.includes('[security]') || action.includes('port_scan') || action.includes('rate_limit') || action.includes('unauthorized'))
+    return 'security'
+  if (raw.includes('[deploy]') || action.includes('deploy') || action.includes('rollback') || action.includes('tag'))
+    return 'deploy'
+  if (raw.includes('[cicd]') || src.includes('cicd') || src.includes('ci_cd') || action.includes('build') || action.includes('pipeline'))
+    return 'cicd'
+  if (raw.includes('[auth]') || action.includes('login') || action.includes('logout') || action.includes('token') || action.includes('unlock'))
+    return 'auth'
+  if (raw.includes('[db]') || action.includes('migration') || action.includes('query') || action.includes('backup') || action.includes('vacuum') || action.includes('index'))
+    return 'db'
+  if (raw.includes('[cron]') || action.includes('cleanup') || action.includes('cron'))
+    return 'cron'
+  if (raw.includes('[temporal]') || action.includes('clock_skew'))
+    return 'temporal'
+  if (raw.includes('[api]') || src.includes('github') || action.includes('commit') || action.includes('push'))
+    return 'api'
+  return 'other'
+}
+
 const CONFLICT_LABEL: Record<string, string> = {
   out_of_order:         'Out of order',
   clock_skew:           'Clock skew',
@@ -54,6 +93,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [severityFilter, setSeverityFilter] = useState('all')
   const [actorFilter, setActorFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState<Set<string>>(new Set())
   const [chatInput, setChatInput] = useState('')
 
   const { data: flags = [] } = useQuery<{ id: string; event_id: string; label: string | null }[]>({
@@ -83,9 +123,24 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
 
   const actors = Array.from(new Set(timeline.events.map(e => e.actor).filter(Boolean))) as string[]
 
+  const toggleSource = (cat: string) => {
+    setSourceFilter(prev => {
+      const next = new Set(prev)
+      next.has(cat) ? next.delete(cat) : next.add(cat)
+      return next
+    })
+  }
+
+  const categoryCounts = timeline.events.reduce<Record<string, number>>((acc, e) => {
+    const cat = extractCategory(e)
+    acc[cat] = (acc[cat] ?? 0) + 1
+    return acc
+  }, {})
+
   const filtered = timeline.events.filter(e => {
     if (severityFilter !== 'all' && e.severity !== severityFilter) return false
     if (actorFilter !== 'all' && e.actor !== actorFilter) return false
+    if (sourceFilter.size > 0 && !sourceFilter.has(extractCategory(e))) return false
     return true
   })
 
@@ -114,23 +169,31 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
             </div>
           </div>
 
-          {/* Sources */}
+          {/* Sources / Categories */}
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-2">Sources</p>
-            <div className="space-y-1.5">
-              {['GitHub', 'CI/CD', 'Runtime logs', 'Auth'].map((src, i) => (
-                <label key={src} className="flex items-center justify-between cursor-pointer group">
-                  <div className="flex items-center gap-2">
-                    <div className={clsx('w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors',
-                      i < 3 ? 'bg-accent/20 border-accent/40' : 'bg-transparent border-border group-hover:border-muted'
-                    )}>
-                      {i < 3 && <div className="w-1.5 h-1.5 rounded-sm bg-accent" />}
+            <div className="space-y-1">
+              {Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).map(([cat, count]) => {
+                const meta = CATEGORY_META[cat] ?? CATEGORY_META.other
+                const checked = sourceFilter.has(cat)
+                return (
+                  <label key={cat} onClick={() => toggleSource(cat)}
+                    className="flex items-center justify-between cursor-pointer group py-0.5"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={clsx(
+                        'w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors flex-shrink-0',
+                        checked ? 'bg-accent/20 border-accent/40' : 'bg-transparent border-border group-hover:border-muted'
+                      )}>
+                        {checked && <div className="w-1.5 h-1.5 rounded-sm bg-accent" />}
+                      </div>
+                      <div className={clsx('w-1.5 h-1.5 rounded-full flex-shrink-0', meta.dot)} />
+                      <span className="text-xs text-muted group-hover:text-white transition-colors">{meta.label}</span>
                     </div>
-                    <span className="text-xs text-muted group-hover:text-white transition-colors">{src}</span>
-                  </div>
-                  <span className="text-[10px] text-subtle">{[3, 2, 2, 1][i]}</span>
-                </label>
-              ))}
+                    <span className="text-[10px] text-subtle">{count}</span>
+                  </label>
+                )
+              })}
             </div>
           </div>
 
@@ -180,7 +243,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
         {/* Clear filters */}
         <div className="p-3 border-t border-border">
           <button
-            onClick={() => { setSeverityFilter('all'); setActorFilter('all') }}
+            onClick={() => { setSeverityFilter('all'); setActorFilter('all'); setSourceFilter(new Set()) }}
             className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-muted hover:text-white transition-colors"
           >
             <X size={11} />
