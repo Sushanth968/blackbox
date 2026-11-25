@@ -169,23 +169,31 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
             </div>
           </div>
 
-          {/* Sources */}
+          {/* Sources / Categories */}
           <div>
             <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-2">Sources</p>
-            <div className="space-y-1.5">
-              {['GitHub', 'CI/CD', 'Runtime logs', 'Auth'].map((src, i) => (
-                <label key={src} className="flex items-center justify-between cursor-pointer group">
-                  <div className="flex items-center gap-2">
-                    <div className={clsx('w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors',
-                      i < 3 ? 'bg-accent/20 border-accent/40' : 'bg-transparent border-border group-hover:border-muted'
-                    )}>
-                      {i < 3 && <div className="w-1.5 h-1.5 rounded-sm bg-accent" />}
+            <div className="space-y-1">
+              {Object.entries(categoryCounts).sort((a, b) => b[1] - a[1]).map(([cat, count]) => {
+                const meta = CATEGORY_META[cat] ?? CATEGORY_META.other
+                const checked = sourceFilter.has(cat)
+                return (
+                  <label key={cat} onClick={() => toggleSource(cat)}
+                    className="flex items-center justify-between cursor-pointer group py-0.5"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={clsx(
+                        'w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors flex-shrink-0',
+                        checked ? 'bg-accent/20 border-accent/40' : 'bg-transparent border-border group-hover:border-muted'
+                      )}>
+                        {checked && <div className="w-1.5 h-1.5 rounded-sm bg-accent" />}
+                      </div>
+                      <div className={clsx('w-1.5 h-1.5 rounded-full flex-shrink-0', meta.dot)} />
+                      <span className="text-xs text-muted group-hover:text-white transition-colors">{meta.label}</span>
                     </div>
-                    <span className="text-xs text-muted group-hover:text-white transition-colors">{src}</span>
-                  </div>
-                  <span className="text-[10px] text-subtle">{[3, 2, 2, 1][i]}</span>
-                </label>
-              ))}
+                    <span className="text-[10px] text-subtle">{count}</span>
+                  </label>
+                )
+              })}
             </div>
           </div>
 
@@ -235,7 +243,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
         {/* Clear filters */}
         <div className="p-3 border-t border-border">
           <button
-            onClick={() => { setSeverityFilter('all'); setActorFilter('all') }}
+            onClick={() => { setSeverityFilter('all'); setActorFilter('all'); setSourceFilter(new Set()) }}
             className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-muted hover:text-white transition-colors"
           >
             <X size={11} />
