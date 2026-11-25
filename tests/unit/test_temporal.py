@@ -65,13 +65,24 @@ def test_gap_anomaly_flagged_for_large_gap():
     assert "gap_anomaly" in _types(detect_conflicts(events))
 
 
-def test_clock_skew_flagged_across_sources_for_same_actor():
+def test_clock_skew_flagged_for_same_actor_and_action_across_sources():
     skew = ws.temporal.clock_skew_threshold_seconds + 100
     events = [
-        Ev("1", "git.log", BASE, actor="alice", source_line=1),
-        Ev("2", "ci.log", BASE + timedelta(seconds=skew), actor="alice", source_line=1),
+        Ev("1", "git.log", BASE, actor="alice", action="commit", source_line=1),
+        Ev("2", "ci.log", BASE + timedelta(seconds=skew), actor="alice", action="commit", source_line=1),
     ]
     assert "clock_skew" in _types(detect_conflicts(events))
+
+
+def test_clock_skew_not_flagged_for_different_actions_elapsed_time():
+    """Two different activities by one actor, far apart, are ordinary elapsed
+    time across systems — not clock skew."""
+    gap = ws.temporal.clock_skew_threshold_seconds + 100
+    events = [
+        Ev("1", "git.log", BASE, actor="alice", action="commit", source_line=1),
+        Ev("2", "ci.log", BASE + timedelta(seconds=gap), actor="alice", action="deploy", source_line=1),
+    ]
+    assert "clock_skew" not in _types(detect_conflicts(events))
 
 
 def test_clean_single_source_has_no_conflicts():
