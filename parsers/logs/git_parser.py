@@ -112,8 +112,8 @@ def _parse_git_date(s: str) -> Optional[datetime]:
 
 def _git_severity(subject: str) -> str:
     low = subject.lower()
-    if any(w in low for w in ("fix", "bug", "hotfix", "patch", "revert")):
-        return "warning"
     if any(w in low for w in ("security", "cve", "vuln", "critical")):
         return "critical"
+    if any(w in low for w in ("fix", "bug", "hotfix", "patch", "revert")):
+        return "warning"
     return "info"
