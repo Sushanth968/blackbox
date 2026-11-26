@@ -80,6 +80,13 @@ def _clock_skew(events: list) -> list:
             prev, curr = sorted_evs[i - 1], sorted_evs[i]
             if prev.source == curr.source:
                 continue
+            # Only compare the SAME action across the two sources. Otherwise the
+            # ordinary elapsed time between two different activities by one actor
+            # (e.g. a commit, then minutes later a deploy) looks like clock skew —
+            # a false positive. Matching actions are plausibly the same occurrence
+            # logged by two systems, so a large gap there really is skew.
+            if not prev.action or not curr.action or prev.action != curr.action:
+                continue
             skew = abs((_as_utc(curr.timestamp) - _as_utc(prev.timestamp)).total_seconds())
             if skew > _ws.temporal.clock_skew_threshold_seconds:
                 conflicts.append({
@@ -89,8 +96,9 @@ def _clock_skew(events: list) -> list:
                     "event_b_id": str(curr.id),
                     "delta_seconds": skew,
                     "description": (
-                        f"[clock skew] Actor '{actor}' appears in {_basename(prev.source)} "
-                        f"and {_basename(curr.source)} with {_fmt_delta(timedelta(seconds=skew))} gap"
+                        f"[clock skew] Actor '{actor}' '{prev.action}' appears in "
+                        f"{_basename(prev.source)} and {_basename(curr.source)} "
+                        f"{_fmt_delta(timedelta(seconds=skew))} apart"
                     ),
                 })
     return conflicts
