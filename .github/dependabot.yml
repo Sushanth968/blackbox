@@ -1,21 +1,31 @@
 version: 2
 updates:
-  # Backend Python dependencies
+  # Backend Python dependencies — all grouped into one daily PR
   - package-ecosystem: pip
     directory: /backend
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: daily
+    groups:
+      backend-python:
+        patterns: ["*"]
+    open-pull-requests-limit: 1
 
-  # Frontend npm dependencies
+  # Frontend npm dependencies — all grouped into one daily PR
   - package-ecosystem: npm
     directory: /frontend
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: daily
+    groups:
+      frontend-npm:
+        patterns: ["*"]
+    open-pull-requests-limit: 1
 
-  # GitHub Actions themselves
+  # GitHub Actions — all grouped into one daily PR
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: daily
+    groups:
+      actions:
+        patterns: ["*"]
+    open-pull-requests-limit: 1
