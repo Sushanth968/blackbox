@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle, Clock, Filter, Flag,
-  Search, X, ChevronDown, SlidersHorizontal, Send, AlignJustify
+  Search, X, ChevronDown, SlidersHorizontal, Send, AlignJustify, Sparkles
 } from 'lucide-react'
 import type { TimelineResponse, Event, Conflict } from '../services/types'
 import { format } from 'date-fns'
@@ -423,6 +423,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
             event={selectedEvent}
             conflicts={timeline.conflicts.filter(c => c.event_a_id === selectedEvent.id || c.event_b_id === selectedEvent.id)}
             onClose={() => setSelectedId(null)}
+            investigationId={investigationId}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-muted px-6 text-center">
@@ -437,13 +438,37 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
   )
 }
 
-function EventDetailsPanel({ event, conflicts, onClose }: {
+function EventDetailsPanel({ event, conflicts, onClose, investigationId }: {
   event: Event
   conflicts: Conflict[]
   onClose: () => void
+  investigationId: string
 }) {
   const sev = event.severity || 'info'
   const eventId = `EVT-${event.id.slice(0, 5).toUpperCase()}`
+  const [explanation, setExplanation] = useState<string | null>(null)
+  const [explainError, setExplainError] = useState<string | null>(null)
+  const [explainLoading, setExplainLoading] = useState(false)
+
+  useEffect(() => {
+    setExplanation(null)
+    setExplainError(null)
+    setExplainLoading(false)
+  }, [event.id])
+
+  async function handleExplain() {
+    setExplainLoading(true)
+    setExplainError(null)
+    try {
+      const resp = await api.post(`/investigations/${investigationId}/events/${event.id}/explain`)
+      setExplanation(resp.data.explanation)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setExplainError(msg ?? 'Failed to get explanation. Check your ANTHROPIC_API_KEY.')
+    } finally {
+      setExplainLoading(false)
+    }
+  }
 
   return (
     <>
@@ -564,6 +589,56 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
             </div>
           </div>
         )}
+
+        {/* AI Explanation */}
+        <div className="border-t border-border pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wider text-muted font-semibold flex items-center gap-1">
+              <Sparkles size={10} />
+              AI Explanation
+            </span>
+            {!explanation && !explainLoading && (
+              <button
+                onClick={handleExplain}
+                className="flex items-center gap-1 text-[10px] text-accent border border-accent/30 rounded px-2 py-0.5 hover:bg-accent/10 transition-colors"
+              >
+                <Sparkles size={9} />
+                Explain
+              </button>
+            )}
+            {explanation && (
+              <button
+                onClick={() => { setExplanation(null); setExplainError(null) }}
+                className="text-[10px] text-muted hover:text-foreground transition-colors"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+
+          {explainLoading && (
+            <div className="bg-panel-2 border border-border rounded-md px-3 py-3 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full border-2 border-accent/40 border-t-accent animate-spin flex-shrink-0" />
+              <span className="text-[10px] text-muted">Analyzing event…</span>
+            </div>
+          )}
+
+          {explainError && (
+            <div className="bg-red-500/8 border border-red-500/20 rounded-md px-3 py-2">
+              <p className="text-[10px] text-red-500">{explainError}</p>
+            </div>
+          )}
+
+          {explanation && (
+            <div className="bg-accent/5 border border-accent/20 rounded-md px-3 py-2.5">
+              <p className="text-[10px] text-foreground/80 leading-relaxed whitespace-pre-wrap">{explanation}</p>
+            </div>
+          )}
+
+          {!explanation && !explainLoading && !explainError && (
+            <p className="text-[10px] text-muted">Click Explain to get an AI analysis of this event.</p>
+          )}
+        </div>
 
         {/* Legend */}
         <div className="border-t border-border pt-3">
