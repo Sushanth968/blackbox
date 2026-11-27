@@ -1,11 +1,13 @@
 from typing import Optional
 import uuid
 import json
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from db.session import get_db
+from core.config import settings
 from models.event import Event
 from models.entity import Entity
 from models.relationship import Relationship
@@ -121,6 +123,81 @@ async def label_event(
     await db.commit()
     await db.refresh(event)
     return event
+
+# ── AI Event explanation ─────────────────────────────────────────────────────
+
+@router.post("/{investigation_id}/events/{event_id}/explain")
+async def explain_event(
+    investigation_id: uuid.UUID,
+    event_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    event = await db.get(Event, event_id)
+    if not event or event.investigation_id != investigation_id:
+        raise HTTPException(404, "Event not found")
+
+    api_key = settings.ANTHROPIC_API_KEY
+    if not api_key:
+        raise HTTPException(422, "No Anthropic API key configured. Set ANTHROPIC_API_KEY in .env.")
+
+    parts = []
+    if event.timestamp:
+        parts.append(f"Timestamp: {event.timestamp.isoformat()}")
+    if event.severity:
+        parts.append(f"Severity: {event.severity}")
+    if event.actor:
+        parts.append(f"Actor: {event.actor}")
+    if event.action:
+        parts.append(f"Action: {event.action}")
+    if event.object:
+        parts.append(f"Object/Target: {event.object}")
+    if event.source:
+        parts.append(f"Source file: {event.source.split('/')[-1]}")
+    if event.raw:
+        parts.append(f"Raw log entry:\n{event.raw}")
+
+    prompt = f"""You are a security analyst and incident responder. Explain the following event from an investigation log.
+
+{chr(10).join(parts)}
+
+Provide:
+1. What this event means (1-2 sentences)
+2. Why it may be significant in a security investigation
+3. What to look for next
+
+Be concise and direct. Use plain text, no markdown headers."""
+
+    payload = {
+        "model": settings.ANTHROPIC_MODEL,
+        "max_tokens": 512,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+
+    base_url = settings.ANTHROPIC_BASE_URL.rstrip("/")
+    async with httpx.AsyncClient(timeout=60) as client:
+        try:
+            resp = await client.post(
+                f"{base_url}/v1/messages",
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                },
+            )
+        except httpx.RequestError as exc:
+            raise HTTPException(502, f"Could not reach LLM endpoint: {exc}")
+
+    if resp.status_code == 401:
+        raise HTTPException(401, "Invalid API key.")
+    if resp.status_code == 429:
+        raise HTTPException(429, "Rate limit exceeded.")
+    if resp.status_code != 200:
+        raise HTTPException(502, f"LLM API error {resp.status_code}: {resp.text[:200]}")
+
+    explanation = resp.json()["content"][0]["text"]
+    return {"explanation": explanation}
+
 
 # ── Entities & Graph ────────────────────────────────────────────────────────
 
