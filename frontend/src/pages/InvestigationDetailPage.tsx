@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2, ChevronRight, FileText, List, AlertTriangle, Share2, FileOutput, Plus, Shield, Trash2 } from 'lucide-react'
+import { Loader2, ChevronRight, FileText, List, AlertTriangle, Share2, FileOutput, Plus, Shield, Trash2, Github } from 'lucide-react'
 import { api } from '../services/api'
 import type { Investigation, TimelineResponse, EvidenceFile, ConfidenceScore } from '../services/types'
 import EvidencePanel from '../components/EvidencePanel'
+import ConnectedRepoPanel from '../components/ConnectedRepoPanel'
 import TimelineView from '../timeline/TimelineView'
 import EntityGraph from '../graph/EntityGraph'
 import WorkspacePanel from '../components/WorkspacePanel'
@@ -12,12 +13,13 @@ import ExportPanel from '../components/ExportPanel'
 import ConfidencePanel from '../components/ConfidencePanel'
 import clsx from 'clsx'
 
-type Tab = 'overview' | 'timeline' | 'evidence' | 'relationships' | 'anomalies' | 'report'
+type Tab = 'overview' | 'timeline' | 'evidence' | 'source' | 'relationships' | 'anomalies' | 'report'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview',       label: 'Overview',       icon: <List size={13} /> },
   { id: 'timeline',       label: 'Timeline',        icon: <List size={13} /> },
   { id: 'evidence',       label: 'Evidence',        icon: <FileText size={13} /> },
+  { id: 'source',         label: 'Source',          icon: <Github size={13} /> },
   { id: 'relationships',  label: 'Relationships',   icon: <Share2 size={13} /> },
   { id: 'anomalies',      label: 'Anomalies',       icon: <AlertTriangle size={13} /> },
   { id: 'report',         label: 'Report',          icon: <FileOutput size={13} /> },
@@ -202,6 +204,11 @@ export default function InvestigationDetailPage() {
         {tab === 'evidence' && (
           <div className="p-6 max-w-3xl">
             <EvidencePanel investigationId={id!} />
+          </div>
+        )}
+        {tab === 'source' && (
+          <div className="p-6">
+            <ConnectedRepoPanel investigationId={id!} />
           </div>
         )}
         {tab === 'relationships' && (
