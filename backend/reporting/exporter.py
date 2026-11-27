@@ -211,7 +211,7 @@ def render_text_report(data: dict) -> str:
         lines += ["NOTES", "-" * 40]
         for n in notes:
             author = f" [{n.get('author')}]" if n.get("author") else ""
-            lines.append(f"  {n.get('created_at','')[:19]}{author}")
+            lines.append(f"  {(n.get('created_at') or '')[:19]}{author}")
             for note_line in n.get("content", "").splitlines():
                 lines.append(f"    {note_line}")
         lines.append("")
