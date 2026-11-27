@@ -1,0 +1,41 @@
+workspace:
+  name: "Customer Payment Dispute"
+  description: "Reconstruct payment-dispute incidents from transactions, refunds, emails and complaints — a non-software domain served by the same engine."
+
+parsers:
+  enabled:
+    - json
+    - jsonl
+    - csv
+    - log
+
+temporal:
+  out_of_order_threshold_seconds: 1
+  clock_skew_threshold_seconds: 300
+  duplicate_timestamp_min_count: 3
+  gap_anomaly_multiplier: 10
+  gap_anomaly_min_seconds: 86400   # disputes play out over days, not seconds
+  dependency_rules:
+    # A refund can't legitimately precede the charge it refunds (same transaction).
+    - name: refund-after-charge
+      cause: {action: charge}
+      effect: {action: refund}
+      scope: [object]
+    # A complaint about an order should follow the order (same customer).
+    - name: complaint-after-order
+      cause: {action: order}
+      effect: {action: complaint}
+      scope: [actor]
+
+entities:
+  extract: [user, email, ip]
+  ignore: []
+
+export:
+  include_raw: true
+  report_sections:
+    - summary
+    - evidence_files
+    - temporal_conflicts
+    - flagged_events
+    - entities
