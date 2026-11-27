@@ -10,6 +10,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -86,14 +87,20 @@ async def sync_repo(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_
     # Persist the fetched activity as a hashed JSON evidence file, then ingest it
     # through the normal pipeline (keeps evidence-first integrity).
     payload = json.dumps(events, indent=2).encode()
-    base_upload_dir = os.path.realpath(settings.UPLOAD_DIR)
-    inv_dir = os.path.realpath(os.path.join(base_upload_dir, str(investigation_id)))
-    if os.path.commonpath([base_upload_dir, inv_dir]) != base_upload_dir:
+    base_upload_dir = Path(settings.UPLOAD_DIR).resolve()
+    inv_dir = (base_upload_dir / str(investigation_id)).resolve()
+    try:
+        inv_dir.relative_to(base_upload_dir)
+    except ValueError:
         raise HTTPException(400, "Invalid investigation path")
-    os.makedirs(inv_dir, exist_ok=True)
+    inv_dir.mkdir(parents=True, exist_ok=True)
     stored = f"{uuid.uuid4()}_github-sync.json"
-    dest = os.path.join(inv_dir, stored)
-    with open(dest, "wb") as fh:
+    dest = (inv_dir / stored).resolve()
+    try:
+        dest.relative_to(inv_dir)
+    except ValueError:
+        raise HTTPException(400, "Invalid destination path")
+    with dest.open("wb") as fh:
         fh.write(payload)
 
     ev = EvidenceFile(
