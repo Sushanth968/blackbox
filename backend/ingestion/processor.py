@@ -78,6 +78,11 @@ async def process_evidence_file(
     if not ev_file:
         return
 
+    # Accept either a str or a Path. Parsers embed ``file_path`` as each event's
+    # ``source`` and SQLite cannot bind a Path object, so normalize to str here —
+    # at the single ingestion chokepoint — rather than at every call site.
+    file_path = os.fspath(file_path)
+
     parser = _detect_parser(file_path, file_type)
     try:
         ev_file.status = "processing"
