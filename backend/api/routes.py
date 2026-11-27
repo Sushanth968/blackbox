@@ -1,7 +1,7 @@
 from typing import Optional
 import uuid
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -241,12 +241,18 @@ async def export_report(investigation_id: uuid.UUID, db: AsyncSession = Depends(
 global_router = APIRouter()
 
 @global_router.get("/evidence", response_model=list[dict])
-async def list_all_evidence(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
+async def list_all_evidence(
+    db: AsyncSession = Depends(get_db),
+    x_user_email: Optional[str] = Header(default=None),
+):
+    q = (
         select(EvidenceFile, Investigation.title)
         .join(Investigation, EvidenceFile.investigation_id == Investigation.id)
         .order_by(EvidenceFile.uploaded_at.desc())
     )
+    if x_user_email:
+        q = q.where(Investigation.owner_email == x_user_email)
+    result = await db.execute(q)
     rows = result.all()
     return [
         {
@@ -264,10 +270,14 @@ async def list_all_evidence(db: AsyncSession = Depends(get_db)):
     ]
 
 @global_router.get("/workspaces", response_model=list[dict])
-async def list_all_workspaces(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Investigation).order_by(Investigation.created_at.desc())
-    )
+async def list_all_workspaces(
+    db: AsyncSession = Depends(get_db),
+    x_user_email: Optional[str] = Header(default=None),
+):
+    q = select(Investigation).order_by(Investigation.created_at.desc())
+    if x_user_email:
+        q = q.where(Investigation.owner_email == x_user_email)
+    result = await db.execute(q)
     investigations = result.scalars().all()
 
     out = []

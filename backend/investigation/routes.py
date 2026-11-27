@@ -1,5 +1,6 @@
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from db.session import get_db
@@ -9,16 +10,26 @@ from schemas.investigation import InvestigationCreate, InvestigationUpdate, Inve
 router = APIRouter()
 
 @router.post("/", response_model=InvestigationOut, status_code=201)
-async def create_investigation(payload: InvestigationCreate, db: AsyncSession = Depends(get_db)):
-    inv = Investigation(**payload.model_dump())
+async def create_investigation(
+    payload: InvestigationCreate,
+    db: AsyncSession = Depends(get_db),
+    x_user_email: Optional[str] = Header(default=None),
+):
+    inv = Investigation(**payload.model_dump(), owner_email=x_user_email)
     db.add(inv)
     await db.commit()
     await db.refresh(inv)
     return inv
 
 @router.get("/", response_model=list[InvestigationOut])
-async def list_investigations(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Investigation).order_by(Investigation.created_at.desc()))
+async def list_investigations(
+    db: AsyncSession = Depends(get_db),
+    x_user_email: Optional[str] = Header(default=None),
+):
+    q = select(Investigation).order_by(Investigation.created_at.desc())
+    if x_user_email:
+        q = q.where(Investigation.owner_email == x_user_email)
+    result = await db.execute(q)
     return result.scalars().all()
 
 @router.get("/{investigation_id}", response_model=InvestigationOut)
