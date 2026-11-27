@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   Layers, StickyNote, Flag, FileText, Search, ChevronRight,
-  Loader2, Plus, Trash2, CheckCircle, Clock, AlertCircle
+  Loader2, Plus, Trash2
 } from 'lucide-react'
 import { api } from '../services/api'
 import { format } from 'date-fns'
@@ -88,7 +88,7 @@ export default function WorkspacesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-bold text-white flex items-center gap-2">
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Layers size={18} className="text-accent" />
             Workspaces
           </h1>
@@ -117,7 +117,7 @@ export default function WorkspacesPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search investigations..."
-          className="w-full bg-panel border border-border rounded-md pl-8 pr-3 py-1.5 text-xs text-white placeholder-muted focus:outline-none focus:border-accent/50 transition-colors"
+          className="w-full bg-panel border border-border rounded-md pl-8 pr-3 py-1.5 text-xs text-foreground placeholder-muted focus:outline-none focus:border-accent/50 transition-colors"
         />
       </div>
 
@@ -144,10 +144,9 @@ export default function WorkspacesPage() {
             const isOpen = expanded.has(w.id)
             return (
               <div key={w.id} className="bg-panel border border-border rounded-xl overflow-hidden">
-                {/* Row header */}
                 <button
                   onClick={() => toggle(w.id)}
-                  className="w-full flex items-center gap-3 px-5 py-4 hover:bg-white/3 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-5 py-4 hover:bg-black/[0.03] transition-colors text-left"
                 >
                   <ChevronRight
                     size={13}
@@ -156,7 +155,7 @@ export default function WorkspacesPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-white truncate">{w.title}</span>
+                      <span className="text-sm font-medium text-foreground truncate">{w.title}</span>
                       <span className={clsx(
                         'text-[10px] px-2 py-0.5 rounded-full border font-medium',
                         STATUS_PILL[w.status] ?? STATUS_PILL.open
@@ -183,7 +182,6 @@ export default function WorkspacesPage() {
                   </div>
                 </button>
 
-                {/* Expanded notes area */}
                 {isOpen && (
                   <div className="border-t border-border bg-surface">
                     {w.notes.length === 0 && addingNoteFor !== w.id ? (
@@ -199,14 +197,14 @@ export default function WorkspacesPage() {
                     ) : (
                       <div className="divide-y divide-border/50">
                         {w.notes.map(note => (
-                          <div key={note.id} className="flex items-start gap-3 px-5 py-3 group hover:bg-white/2">
+                          <div key={note.id} className="flex items-start gap-3 px-5 py-3 group hover:bg-black/[0.02]">
                             <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-[9px] font-bold text-accent">
                                 {(note.author ?? 'U').slice(0, 2).toUpperCase()}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs text-white/90 whitespace-pre-wrap">{note.content}</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{note.content}</p>
                               <p className="text-[10px] text-subtle mt-1">
                                 {note.author ?? 'Unknown'} ·{' '}
                                 {note.created_at ? format(new Date(note.created_at), 'MMM d, HH:mm') : '—'}
@@ -232,14 +230,14 @@ export default function WorkspacesPage() {
                           onChange={e => setNoteContent(e.target.value)}
                           placeholder="Write a note..."
                           rows={3}
-                          className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-white mb-2 resize-none focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+                          className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground mb-2 resize-none focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
                         />
                         <div className="flex items-center gap-2">
                           <input
                             value={noteAuthor}
                             onChange={e => setNoteAuthor(e.target.value)}
                             placeholder="Author"
-                            className="w-24 bg-surface border border-border rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+                            className="w-24 bg-surface border border-border rounded px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
                           />
                           <button
                             onClick={() => addNote.mutate({ invId: w.id, content: noteContent, author: noteAuthor })}
@@ -251,7 +249,7 @@ export default function WorkspacesPage() {
                           </button>
                           <button
                             onClick={() => { setAddingNoteFor(null); setNoteContent('') }}
-                            className="px-3 py-1.5 bg-transparent border border-border rounded-md text-xs text-muted hover:text-white transition-colors"
+                            className="px-3 py-1.5 bg-transparent border border-border rounded-md text-xs text-muted hover:text-foreground transition-colors"
                           >
                             Cancel
                           </button>
@@ -283,7 +281,7 @@ function Stat({ icon, count, label }: { icon: React.ReactNode; count: number; la
   return (
     <div className="flex items-center gap-1 text-[10px] text-muted">
       {icon}
-      <span className={count > 0 ? 'text-white/70' : ''}>{count}</span>
+      <span className={count > 0 ? 'text-foreground/70' : ''}>{count}</span>
       <span className="hidden sm:inline">{label}</span>
     </div>
   )

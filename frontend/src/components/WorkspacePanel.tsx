@@ -49,19 +49,18 @@ export default function WorkspacePanel({ investigationId }: { investigationId: s
 
   return (
     <div className="bg-panel border border-border rounded-xl p-4">
-      <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-3">
+      <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
         <StickyNote size={14} />
         Investigation Notes
       </h2>
 
-      {/* Add note */}
       <div className="mb-4">
         <textarea
           value={draft}
           onChange={e => setDraft(e.target.value)}
           placeholder="Add a note…"
           rows={2}
-          className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-accent placeholder:text-gray-600"
+          className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:border-accent/50 placeholder:text-muted transition-colors"
           onKeyDown={e => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && draft.trim()) {
               add.mutate(draft.trim())
@@ -72,7 +71,7 @@ export default function WorkspacePanel({ investigationId }: { investigationId: s
           <button
             onClick={() => draft.trim() && add.mutate(draft.trim())}
             disabled={!draft.trim() || add.isPending}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-accent hover:bg-accent/80 disabled:opacity-40 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-accent text-white hover:bg-accent/80 disabled:opacity-40 rounded-lg transition-colors"
           >
             <Plus size={12} />
             {add.isPending ? 'Adding…' : 'Add note'}
@@ -80,15 +79,14 @@ export default function WorkspacePanel({ investigationId }: { investigationId: s
         </div>
       </div>
 
-      {/* Notes list */}
       {isLoading ? (
-        <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-gray-500" /></div>
+        <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-muted" /></div>
       ) : notes.length === 0 ? (
-        <p className="text-xs text-gray-600 text-center py-4">No notes yet</p>
+        <p className="text-xs text-subtle text-center py-4">No notes yet</p>
       ) : (
         <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
           {notes.map(note => (
-            <div key={note.id} className="group bg-surface rounded-lg p-3 border border-border/50">
+            <div key={note.id} className="group bg-surface rounded-lg p-3 border border-border">
               {editId === note.id ? (
                 <div>
                   <textarea
@@ -96,34 +94,34 @@ export default function WorkspacePanel({ investigationId }: { investigationId: s
                     onChange={e => setEditContent(e.target.value)}
                     rows={3}
                     autoFocus
-                    className="w-full bg-panel border border-accent rounded px-2 py-1.5 text-sm resize-none focus:outline-none"
+                    className="w-full bg-panel border border-accent/50 rounded px-2 py-1.5 text-sm text-foreground resize-none focus:outline-none focus:border-accent transition-colors"
                   />
                   <div className="flex gap-1.5 mt-1.5 justify-end">
                     <button
                       onClick={() => update.mutate({ id: note.id, content: editContent })}
                       disabled={!editContent.trim()}
-                      className="p-1 text-green-400 hover:text-green-300"
+                      className="p-1 text-success hover:text-success/70 transition-colors"
                     ><Check size={13} /></button>
-                    <button onClick={() => setEditId(null)} className="p-1 text-gray-500 hover:text-gray-300">
+                    <button onClick={() => setEditId(null)} className="p-1 text-muted hover:text-foreground transition-colors">
                       <X size={13} />
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">{note.content}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">{note.content}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted">
                       {format(new Date(note.created_at), 'MMM d, HH:mm')}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setEditId(note.id); setEditContent(note.content) }}
-                        className="p-1 text-gray-500 hover:text-white"
+                        className="p-1 text-muted hover:text-foreground transition-colors"
                       ><Pencil size={12} /></button>
                       <button
                         onClick={() => remove.mutate(note.id)}
-                        className="p-1 text-gray-500 hover:text-red-400"
+                        className="p-1 text-muted hover:text-danger transition-colors"
                       ><Trash2 size={12} /></button>
                     </div>
                   </div>

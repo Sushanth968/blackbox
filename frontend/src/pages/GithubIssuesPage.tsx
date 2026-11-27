@@ -40,7 +40,6 @@ export default function GithubIssuesPage() {
   const [anthropicKey, setAnthropicKey] = useState('')
   const [showSettings, setShowSettings] = useState(false)
 
-  // repo search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<RepoResult[]>([])
   const [searching, setSearching] = useState(false)
@@ -57,7 +56,6 @@ export default function GithubIssuesPage() {
   const [solutions, setSolutions] = useState<Record<number, string>>({})
   const [analyzeError, setAnalyzeError] = useState<Record<number, string>>({})
 
-  // close dropdown on outside click
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -68,7 +66,6 @@ export default function GithubIssuesPage() {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
-  // debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     if (!searchQuery.trim()) {
@@ -154,7 +151,7 @@ export default function GithubIssuesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-bold text-white flex items-center gap-2">
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Github size={18} />
             GitHub Issue Analyzer
           </h1>
@@ -164,14 +161,13 @@ export default function GithubIssuesPage() {
 
       {/* Config tile */}
       <div className="bg-panel border border-border rounded-xl p-5 mb-5">
-
         {/* Repo search */}
         <div className="mb-3" ref={searchRef}>
           <label className="block text-[10px] text-muted mb-1.5 font-medium uppercase tracking-wider">Search OSS repositories</label>
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
             <input
-              className="w-full bg-surface border border-border rounded-lg pl-8 pr-8 py-2 text-xs text-white focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+              className="w-full bg-surface border border-border rounded-lg pl-8 pr-8 py-2 text-xs text-foreground focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
               placeholder="Search by name, topic, or description…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -181,24 +177,23 @@ export default function GithubIssuesPage() {
               <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted animate-spin" />
             )}
             {!searching && searchQuery && (
-              <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors">
+              <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors">
                 <X size={12} />
               </button>
             )}
 
-            {/* Dropdown */}
             {showDropdown && searchResults.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-panel border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
                 {searchResults.map(repo => (
                   <button
                     key={repo.full_name}
                     onClick={() => pickRepo(repo)}
-                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left border-b border-border last:border-b-0"
+                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-black/5 transition-colors text-left border-b border-border last:border-b-0"
                   >
                     <Github size={13} className="text-muted mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-white">{repo.full_name}</span>
+                        <span className="text-xs font-medium text-foreground">{repo.full_name}</span>
                         {repo.language && (
                           <span className="text-[10px] text-muted">{repo.language}</span>
                         )}
@@ -226,7 +221,7 @@ export default function GithubIssuesPage() {
           <div className="relative flex-1">
             <Github size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
-              className="w-full bg-surface border border-border rounded-lg pl-8 pr-3 py-2 text-xs text-white focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+              className="w-full bg-surface border border-border rounded-lg pl-8 pr-3 py-2 text-xs text-foreground focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
               placeholder="https://github.com/owner/repo  or  owner/repo"
               value={repoUrl}
               onChange={e => setRepoUrl(e.target.value)}
@@ -246,7 +241,7 @@ export default function GithubIssuesPage() {
         {/* Optional settings toggle */}
         <button
           onClick={() => setShowSettings(s => !s)}
-          className="flex items-center gap-1 text-[11px] text-muted hover:text-white transition-colors"
+          className="flex items-center gap-1 text-[11px] text-muted hover:text-foreground transition-colors"
         >
           <KeyRound size={11} />
           API keys &amp; tokens (optional)
@@ -259,7 +254,7 @@ export default function GithubIssuesPage() {
               <label className="block text-[10px] text-muted mb-1">GitHub Token (for private repos / higher rate limit)</label>
               <input
                 type="password"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
                 placeholder="ghp_…"
                 value={githubToken}
                 onChange={e => setGithubToken(e.target.value)}
@@ -269,7 +264,7 @@ export default function GithubIssuesPage() {
               <label className="block text-[10px] text-muted mb-1">Anthropic API Key (for AI solutions)</label>
               <input
                 type="password"
-                className="w-full bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
                 placeholder="sk-ant-…"
                 value={anthropicKey}
                 onChange={e => setAnthropicKey(e.target.value)}
@@ -292,7 +287,7 @@ export default function GithubIssuesPage() {
         <>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-muted">
-              <span className="text-white font-medium">{result.issues.length}</span> open issue{result.issues.length !== 1 ? 's' : ''} in{' '}
+              <span className="text-foreground font-medium">{result.issues.length}</span> open issue{result.issues.length !== 1 ? 's' : ''} in{' '}
               <span className="text-accent">{result.repo}</span>
             </p>
           </div>
@@ -315,7 +310,6 @@ export default function GithubIssuesPage() {
                     key={issue.number}
                     className="bg-panel border border-border hover:border-border-2 rounded-xl transition-colors"
                   >
-                    {/* Issue row */}
                     <button
                       onClick={() => setExpandedIssue(isExpanded ? null : issue.number)}
                       className="w-full flex items-start gap-3 px-5 py-4 text-left"
@@ -325,7 +319,7 @@ export default function GithubIssuesPage() {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{issue.title}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{issue.title}</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           {issue.user && <span className="text-[10px] text-muted">by {issue.user}</span>}
                           {issue.comments > 0 && (
@@ -355,7 +349,7 @@ export default function GithubIssuesPage() {
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="p-1 text-muted hover:text-white transition-colors"
+                          className="p-1 text-muted hover:text-foreground transition-colors"
                         >
                           <ExternalLink size={12} />
                         </a>
@@ -363,7 +357,6 @@ export default function GithubIssuesPage() {
                       </div>
                     </button>
 
-                    {/* Expanded content */}
                     {isExpanded && (
                       <div className="px-5 pb-5 border-t border-border">
                         {issue.body && (
@@ -406,13 +399,13 @@ export default function GithubIssuesPage() {
                               <Sparkles size={10} className="text-accent" />
                               AI-Generated Solution
                             </p>
-                            <div className="bg-surface border border-accent/20 rounded-lg px-4 py-3 text-xs text-white whitespace-pre-wrap leading-relaxed">
+                            <div className="bg-surface border border-accent/20 rounded-lg px-4 py-3 text-xs text-foreground whitespace-pre-wrap leading-relaxed">
                               {solution}
                             </div>
                             <button
                               onClick={() => handleAnalyze(issue)}
                               disabled={isAnalyzing}
-                              className="mt-2 flex items-center gap-1 text-[10px] text-muted hover:text-white transition-colors"
+                              className="mt-2 flex items-center gap-1 text-[10px] text-muted hover:text-foreground transition-colors"
                             >
                               {isAnalyzing ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                               Regenerate

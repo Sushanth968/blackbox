@@ -130,20 +130,20 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
 
   if (isLoading) return (
     <div className="bg-panel border border-border rounded-xl p-4 flex justify-center py-12">
-      <Loader2 size={20} className="animate-spin text-gray-500" />
+      <Loader2 size={20} className="animate-spin text-muted" />
     </div>
   )
 
   return (
     <div className="bg-panel border border-border rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Network size={14} />
           Entity Graph
         </h2>
         <div className="flex items-center gap-2">
           {graph && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted">
               {graph.nodes.length} nodes · {graph.edges.length} edges
             </span>
           )}
@@ -151,7 +151,7 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
             onClick={() => resolve.mutate()}
             disabled={resolve.isPending}
             title="Re-resolve entities from events"
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-border rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-black/5 hover:bg-black/10 border border-border rounded-lg transition-colors disabled:opacity-50"
           >
             <RefreshCw size={12} className={resolve.isPending ? 'animate-spin' : ''} />
             Resolve
@@ -160,7 +160,7 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
       </div>
 
       {!graph || graph.nodes.length === 0 ? (
-        <div className="text-center py-10 text-gray-600 text-sm">
+        <div className="text-center py-10 text-muted text-sm">
           <Network size={32} className="mx-auto mb-2 opacity-30" />
           <p>No entities yet.</p>
           <p className="text-xs mt-1">Click Resolve after uploading evidence files.</p>
@@ -174,7 +174,7 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
           >
             <defs>
               <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                <path d="M0,0 L0,6 L8,3 z" fill="#374151" />
+                <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8" />
               </marker>
             </defs>
 
@@ -182,9 +182,9 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
               <line
                 key={i}
                 x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
-                stroke="#374151"
+                stroke="#cbd5e1"
                 strokeWidth={1.5}
-                strokeOpacity={0.6}
+                strokeOpacity={0.8}
                 markerEnd="url(#arrow)"
               />
             ))}
@@ -212,7 +212,7 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
                   <text textAnchor="middle" dy="0.35em" fontSize={9} fill="white" fontFamily="monospace">
                     {node.name.slice(0, 8)}
                   </text>
-                  <text textAnchor="middle" dy={isSelected ? 32 : 26} fontSize={9} fill="#9ca3af" fontFamily="sans-serif">
+                  <text textAnchor="middle" dy={isSelected ? 32 : 26} fontSize={9} fill="#64748b" fontFamily="sans-serif">
                     {node.name.length > 14 ? node.name.slice(0, 12) + '…' : node.name}
                   </text>
                 </g>
@@ -223,18 +223,18 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
           {selectedNode && (
             <div className="flex-1 min-w-0 space-y-3">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Selected</p>
+                <p className="text-xs text-muted uppercase tracking-wider mb-1">Selected</p>
                 <div className="flex items-center gap-2">
                   <span style={{ color: TYPE_COLOR[selectedNode.entity_type] }}>
                     {TYPE_ICON[selectedNode.entity_type] || <User size={11} />}
                   </span>
-                  <span className="text-sm font-medium text-white break-all">{selectedNode.name}</span>
+                  <span className="text-sm font-medium text-foreground break-all">{selectedNode.name}</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 capitalize">{selectedNode.entity_type}</p>
+                <p className="text-xs text-muted mt-1 capitalize">{selectedNode.entity_type}</p>
               </div>
 
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                <p className="text-xs text-muted uppercase tracking-wider mb-1">
                   Connections ({connectedEdges.length})
                 </p>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -244,12 +244,12 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
                     )
                     const isSource = e.source_entity_id === selected
                     return (
-                      <div key={i} className="text-xs flex items-center gap-1.5 text-gray-400">
-                        <span className={clsx('font-mono text-[10px] px-1 py-0.5 rounded', isSource ? 'bg-accent/20 text-accent' : 'bg-gray-700 text-gray-400')}>
+                      <div key={i} className="text-xs flex items-center gap-1.5 text-muted">
+                        <span className={clsx('font-mono text-[10px] px-1 py-0.5 rounded', isSource ? 'bg-accent/15 text-accent' : 'bg-black/5 text-muted')}>
                           {isSource ? '→' : '←'}
                         </span>
-                        <span className="font-medium text-gray-300 truncate">{other?.name || 'unknown'}</span>
-                        <span className="text-gray-600 truncate">via {e.relation}</span>
+                        <span className="font-medium text-foreground truncate">{other?.name || 'unknown'}</span>
+                        <span className="text-subtle truncate">via {e.relation}</span>
                       </div>
                     )
                   })}
@@ -262,7 +262,7 @@ export default function EntityGraph({ investigationId }: { investigationId: stri
 
       <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-border">
         {Object.entries(TYPE_COLOR).map(([type, color]) => (
-          <span key={type} className="flex items-center gap-1 text-xs text-gray-500">
+          <span key={type} className="flex items-center gap-1 text-xs text-muted">
             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
             {type}
           </span>

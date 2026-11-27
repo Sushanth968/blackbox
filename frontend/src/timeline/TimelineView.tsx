@@ -11,8 +11,8 @@ import { api } from '../services/api'
 import { EventLabelBadge } from '../components/ConfidencePanel'
 
 const SEV_BADGE: Record<string, string> = {
-  critical: 'bg-red-500/20 text-red-400 border-red-500/30',
-  error:    'bg-red-400/15 text-red-400 border-red-400/25',
+  critical: 'bg-red-500/20 text-red-600 border-red-500/30',
+  error:    'bg-red-400/15 text-red-600 border-red-400/25',
   warning:  'bg-warning/15 text-warning border-warning/25',
   info:     'bg-accent/10 text-accent border-accent/20',
   debug:    'bg-muted/10 text-muted border-muted/20',
@@ -43,13 +43,13 @@ const SEV_ROW_ACTIVE: Record<string, string> = {
 }
 
 const CATEGORY_META: Record<string, { label: string; color: string; dot: string }> = {
-  github:   { label: 'GitHub',       color: 'bg-purple-500/15 text-purple-400 border-purple-500/30',  dot: 'bg-purple-400' },
-  cicd:     { label: 'CI/CD',        color: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',         dot: 'bg-cyan-400' },
-  deploy:   { label: 'Deploy',       color: 'bg-blue-500/15 text-blue-400 border-blue-500/30',         dot: 'bg-blue-400' },
-  auth:     { label: 'Auth',         color: 'bg-green-500/15 text-green-400 border-green-500/30',      dot: 'bg-green-400' },
-  api:      { label: 'API',          color: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',   dot: 'bg-indigo-400' },
-  db:       { label: 'Database',     color: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',   dot: 'bg-yellow-400' },
-  security: { label: 'Security',     color: 'bg-red-500/15 text-red-400 border-red-500/30',            dot: 'bg-red-400' },
+  github:   { label: 'GitHub',       color: 'bg-purple-500/15 text-purple-600 border-purple-500/30',  dot: 'bg-purple-500' },
+  cicd:     { label: 'CI/CD',        color: 'bg-cyan-500/15 text-cyan-600 border-cyan-500/30',         dot: 'bg-cyan-500' },
+  deploy:   { label: 'Deploy',       color: 'bg-blue-500/15 text-blue-600 border-blue-500/30',         dot: 'bg-blue-500' },
+  auth:     { label: 'Auth',         color: 'bg-green-500/15 text-green-600 border-green-500/30',      dot: 'bg-green-500' },
+  api:      { label: 'API',          color: 'bg-indigo-500/15 text-indigo-600 border-indigo-500/30',   dot: 'bg-indigo-500' },
+  db:       { label: 'Database',     color: 'bg-yellow-500/15 text-yellow-600 border-yellow-500/30',   dot: 'bg-yellow-500' },
+  security: { label: 'Security',     color: 'bg-red-500/15 text-red-600 border-red-500/30',            dot: 'bg-red-500' },
   cron:     { label: 'Cron / Jobs',  color: 'bg-muted/15 text-muted border-muted/30',                  dot: 'bg-muted' },
   temporal: { label: 'Temporal',     color: 'bg-warning/15 text-warning border-warning/30',            dot: 'bg-warning' },
   other:    { label: 'Other',        color: 'bg-panel-2 text-muted border-border',                     dot: 'bg-subtle' },
@@ -155,7 +155,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
       {/* ── Left: Filters ── */}
       <div className="w-56 flex-shrink-0 border-r border-border bg-panel flex flex-col overflow-y-auto">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-xs font-semibold text-white">Timeline filters</span>
+          <span className="text-xs font-semibold text-foreground">Timeline filters</span>
           <SlidersHorizontal size={13} className="text-muted" />
         </div>
 
@@ -188,7 +188,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
                         {checked && <div className="w-1.5 h-1.5 rounded-sm bg-accent" />}
                       </div>
                       <div className={clsx('w-1.5 h-1.5 rounded-full flex-shrink-0', meta.dot)} />
-                      <span className="text-xs text-muted group-hover:text-white transition-colors">{meta.label}</span>
+                      <span className="text-xs text-muted group-hover:text-foreground transition-colors">{meta.label}</span>
                     </div>
                     <span className="text-[10px] text-subtle">{count}</span>
                   </label>
@@ -211,7 +211,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
                     onClick={() => setSeverityFilter(active ? 'all' : s)}
                     className={clsx(
                       'text-[10px] px-2 py-0.5 rounded-full border capitalize transition-colors',
-                      active ? SEV_BADGE[s] : 'border-border text-muted hover:text-white'
+                      active ? SEV_BADGE[s] : 'border-border text-muted hover:text-foreground'
                     )}
                   >
                     {s}
@@ -229,7 +229,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
                 <select
                   value={actorFilter}
                   onChange={e => setActorFilter(e.target.value)}
-                  className="w-full appearance-none bg-panel-2 border border-border rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-accent/50 pr-6"
+                  className="w-full appearance-none bg-surface border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-accent/50 pr-6 transition-colors"
                 >
                   <option value="all">All actors</option>
                   {actors.map(a => <option key={a} value={a}>{a}</option>)}
@@ -244,7 +244,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
         <div className="p-3 border-t border-border">
           <button
             onClick={() => { setSeverityFilter('all'); setActorFilter('all'); setSourceFilter(new Set()) }}
-            className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-muted hover:text-white transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
           >
             <X size={11} />
             Clear filters
@@ -257,17 +257,17 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
         {/* Feed header */}
         <div className="px-4 py-3 border-b border-border flex items-center gap-3 bg-panel flex-shrink-0">
           <div className="flex-1">
-            <span className="text-xs font-semibold text-white">Event timeline</span>
+            <span className="text-xs font-semibold text-foreground">Event timeline</span>
             <span className="text-xs text-muted ml-2">{filtered.length} events</span>
           </div>
-          <button className="p-1.5 text-muted hover:text-white rounded transition-colors hover:bg-white/5">
+          <button className="p-1.5 text-muted hover:text-foreground rounded transition-colors hover:bg-black/5">
             <Search size={13} />
           </button>
           <div className="flex items-center gap-1.5 bg-panel-2 border border-border rounded-md px-2 py-1 text-xs text-muted">
             <span>Reconstructed order</span>
             <ChevronDown size={10} />
           </div>
-          <button className="flex items-center gap-1 bg-panel-2 border border-border rounded-md px-2 py-1 text-[10px] text-muted hover:text-white transition-colors">
+          <button className="flex items-center gap-1 bg-panel-2 border border-border rounded-md px-2 py-1 text-[10px] text-muted hover:text-foreground transition-colors">
             <Filter size={10} />
             Dense
           </button>
@@ -296,7 +296,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
                     onClick={() => setSelectedId(isSelected ? null : ev.id)}
                     className={clsx(
                       'relative flex items-start gap-3 px-4 py-3 cursor-pointer border-b border-border/50 transition-colors group',
-                      isSelected ? SEV_ROW_ACTIVE[sev] || SEV_ROW_ACTIVE.info : 'hover:bg-white/3',
+                      isSelected ? SEV_ROW_ACTIVE[sev] || SEV_ROW_ACTIVE.info : 'hover:bg-black/3',
                       isSelected && 'border-l-2 ' + SEV_LINE[sev]
                     )}
                   >
@@ -319,7 +319,7 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-white truncate">
+                          <p className="text-xs font-medium text-foreground truncate">
                             {ev.action ? ev.action.replace(/_/g, ' ') : ev.raw?.slice(0, 60) || 'Event'}
                           </p>
                           <p className="text-[10px] text-muted mt-0.5 truncate">
@@ -382,9 +382,9 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
             value={chatInput}
             onChange={e => setChatInput(e.target.value)}
             placeholder="Ask about this investigation..."
-            className="flex-1 bg-transparent text-xs text-white placeholder-muted focus:outline-none"
+            className="flex-1 bg-transparent text-xs text-foreground placeholder-muted focus:outline-none"
           />
-          <button className="p-1.5 text-muted hover:text-white transition-colors">
+          <button className="p-1.5 text-muted hover:text-foreground transition-colors">
             <Send size={13} />
           </button>
         </div>
@@ -423,8 +423,8 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
     <>
       {/* Panel header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-        <span className="text-xs font-semibold text-white">Event details</span>
-        <button onClick={onClose} className="p-1 text-muted hover:text-white transition-colors rounded">
+        <span className="text-xs font-semibold text-foreground">Event details</span>
+        <button onClick={onClose} className="p-1 text-muted hover:text-foreground transition-colors rounded">
           <X size={13} />
         </button>
       </div>
@@ -434,13 +434,13 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {sev === 'error' || sev === 'critical' ? (
-              <AlertTriangle size={15} className="text-red-400" />
+              <AlertTriangle size={15} className="text-red-500" />
             ) : sev === 'warning' ? (
               <AlertTriangle size={15} className="text-warning" />
             ) : (
               <Clock size={15} className="text-accent" />
             )}
-            <span className="text-sm font-bold text-white">{eventId}</span>
+            <span className="text-sm font-bold text-foreground">{eventId}</span>
           </div>
           {sev !== 'info' && (
             <span className={clsx('text-[10px] px-2 py-0.5 rounded border font-medium capitalize', SEV_BADGE[sev])}>
@@ -459,7 +459,7 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
 
         {/* Raw / description */}
         {event.raw && (
-          <p className="text-xs text-white/80 leading-relaxed bg-panel-2 border border-border rounded-md px-3 py-2">
+          <p className="text-xs text-foreground/80 leading-relaxed bg-panel-2 border border-border rounded-md px-3 py-2">
             {event.raw.slice(0, 120)}
           </p>
         )}
@@ -476,7 +476,7 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
                 <span className="text-[10px]">{f.icon}</span>
                 {f.label}
               </span>
-              <span className="text-white font-medium truncate">{f.value}</span>
+              <span className="text-foreground font-medium truncate">{f.value}</span>
             </div>
           ))}
           {event.timestamp && (
@@ -485,7 +485,7 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
                 <span className="text-[10px]">🗓</span>
                 Original timestamp
               </span>
-              <span className="text-white font-mono text-[10px]">{format(new Date(event.timestamp), 'HH:mm:ss xxx')}</span>
+              <span className="text-foreground font-mono text-[10px]">{format(new Date(event.timestamp), 'HH:mm:ss xxx')}</span>
             </div>
           )}
           {event.timestamp_confidence < 1 && (
@@ -494,7 +494,7 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
                 <span className="text-[10px]">🛡</span>
                 Extraction conf.
               </span>
-              <span className="text-white font-medium">{event.timestamp_confidence.toFixed(2)}</span>
+              <span className="text-foreground font-medium">{event.timestamp_confidence.toFixed(2)}</span>
             </div>
           )}
         </div>
@@ -514,7 +514,7 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
                   <span className="text-[9px] text-muted">📄</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-white font-medium truncate">{event.source.split('/').pop()}</p>
+                  <p className="text-xs text-foreground font-medium truncate">{event.source.split('/').pop()}</p>
                   {event.source_line && (
                     <p className="text-[10px] text-muted mt-0.5">Line {event.source_line}</p>
                   )}
@@ -545,7 +545,7 @@ function EventDetailsPanel({ event, conflicts, onClose }: {
           <div className="space-y-1.5">
             {[
               { color: 'bg-accent', label: 'Extracted event' },
-              { color: 'bg-purple-400', label: 'Inferred relationship' },
+              { color: 'bg-purple-500', label: 'Inferred relationship' },
               { color: 'bg-warning', label: 'Anomaly' },
               { color: 'bg-success', label: 'User-confirmed conclusion' },
             ].map(l => (

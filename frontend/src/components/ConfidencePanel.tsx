@@ -14,7 +14,7 @@ const LABEL_COLORS = {
 
 const LABEL_TYPE_STYLES: Record<string, string> = {
   fact:        'bg-success/15 text-success border-success/30',
-  inference:   'bg-purple-500/15 text-purple-400 border-purple-500/30',
+  inference:   'bg-purple-500/15 text-purple-600 border-purple-500/30',
   hypothesis:  'bg-warning/15 text-warning border-warning/30',
 }
 
@@ -37,21 +37,18 @@ export default function ConfidencePanel({ investigationId }: { investigationId: 
 
   return (
     <div className="bg-panel border border-border rounded-xl p-4 space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-2">
         <Shield size={14} className={colors.text} />
-        <span className="text-xs font-semibold text-white">Reconstruction Confidence</span>
+        <span className="text-xs font-semibold text-foreground">Reconstruction Confidence</span>
         <span className={clsx('ml-auto text-[10px] px-2 py-0.5 rounded-full border font-medium', colors.badge)}>
           {data.label}
         </span>
       </div>
 
-      {/* Score ring + summary */}
       <div className="flex items-center gap-4">
-        {/* SVG ring */}
         <div className="relative flex-shrink-0 w-20 h-20">
           <svg className="w-20 h-20 -rotate-90" viewBox="0 0 88 88">
-            <circle cx="44" cy="44" r={radius} fill="none" stroke="#21262d" strokeWidth="8" />
+            <circle cx="44" cy="44" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
             <circle
               cx="44" cy="44" r={radius}
               fill="none"
@@ -67,9 +64,8 @@ export default function ConfidencePanel({ investigationId }: { investigationId: 
           </div>
         </div>
 
-        {/* Summary + gaps */}
         <div className="flex-1 min-w-0 space-y-2">
-          <p className="text-xs text-white/80 leading-relaxed">{data.summary}</p>
+          <p className="text-xs text-foreground/80 leading-relaxed">{data.summary}</p>
           {data.gaps.length > 0 && (
             <div className="flex items-start gap-1.5 bg-warning/8 border border-warning/20 rounded-md px-2.5 py-2">
               <AlertTriangle size={11} className="text-warning mt-0.5 flex-shrink-0" />
@@ -82,11 +78,10 @@ export default function ConfidencePanel({ investigationId }: { investigationId: 
         </div>
       </div>
 
-      {/* Dimensions breakdown */}
       <div>
         <button
           onClick={() => setShowDimensions(v => !v)}
-          className="flex items-center gap-1.5 text-[10px] text-muted hover:text-white transition-colors w-full"
+          className="flex items-center gap-1.5 text-[10px] text-muted hover:text-foreground transition-colors w-full"
         >
           {showDimensions ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
           {showDimensions ? 'Hide' : 'Show'} breakdown
@@ -114,14 +109,13 @@ export default function ConfidencePanel({ investigationId }: { investigationId: 
         )}
       </div>
 
-      {/* Evidence gaps list */}
       {data.gaps.length > 0 && showDimensions && (
         <div>
           <p className="text-[10px] uppercase tracking-wider text-muted font-semibold mb-2">Coverage gaps</p>
           <div className="space-y-1.5">
             {data.gaps.map((g, i) => (
               <div key={i} className="bg-panel-2 border border-border rounded-md px-3 py-2">
-                <p className="text-[10px] text-white font-medium">{g.description}</p>
+                <p className="text-[10px] text-foreground font-medium">{g.description}</p>
                 <p className="text-[9px] text-muted mt-0.5">
                   {new Date(g.start_time).toLocaleTimeString()} → {new Date(g.end_time).toLocaleTimeString()}
                 </p>
@@ -174,7 +168,7 @@ export function EventLabelBadge({
               key={lt}
               onClick={() => setLabel.mutate(lt)}
               className={clsx(
-                'w-full flex items-center gap-2 px-3 py-2 text-[10px] hover:bg-white/5 transition-colors capitalize',
+                'w-full flex items-center gap-2 px-3 py-2 text-[10px] hover:bg-black/5 transition-colors capitalize',
                 currentLabel === lt ? LABEL_TYPE_STYLES[lt] + ' font-medium' : 'text-muted'
               )}
             >
@@ -187,7 +181,7 @@ export function EventLabelBadge({
           {currentLabel && (
             <button
               onClick={() => setLabel.mutate(null)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-subtle hover:text-white hover:bg-white/5 transition-colors border-t border-border"
+              className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-subtle hover:text-foreground hover:bg-black/5 transition-colors border-t border-border"
             >
               <XCircle size={10} />
               Remove label
