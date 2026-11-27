@@ -8,6 +8,7 @@ No scheduler: sync is triggered manually ("Sync now").
 import hashlib
 import json
 import os
+from typing import Optional
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,7 +34,7 @@ class LinkBody(BaseModel):
     repo_url: str
 
 
-async def _get_link(investigation_id: uuid.UUID, db: AsyncSession) -> LinkedRepo | None:
+async def _get_link(investigation_id: uuid.UUID, db: AsyncSession) -> Optional["LinkedRepo"]:
     res = await db.execute(select(LinkedRepo).where(LinkedRepo.investigation_id == investigation_id))
     return res.scalars().first()
 

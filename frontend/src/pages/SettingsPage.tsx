@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { User, Bell, Shield, Palette, Key } from 'lucide-react'
 import clsx from 'clsx'
+import { useAuth } from '../context/AuthContext'
 
 const SECTIONS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -11,6 +12,7 @@ const SECTIONS = [
 ]
 
 export default function SettingsPage() {
+  const { user } = useAuth()
   const [active, setActive] = useState('profile')
   const [saved, setSaved] = useState(false)
 
@@ -40,7 +42,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex-1 p-8 max-w-2xl">
-        {active === 'profile' && <ProfileSection onSave={handleSave} saved={saved} />}
+        {active === 'profile' && <ProfileSection onSave={handleSave} saved={saved} name={user?.name ?? ''} email={user?.email ?? ''} initials={user?.initials ?? '??'} />}
         {active === 'notifications' && <NotificationsSection onSave={handleSave} saved={saved} />}
         {active === 'security' && <SecuritySection onSave={handleSave} saved={saved} />}
         {active === 'appearance' && <AppearanceSection onSave={handleSave} saved={saved} />}
@@ -111,18 +113,18 @@ function Toggle({ label, description, defaultChecked }: { label: string; descrip
   )
 }
 
-function ProfileSection({ onSave, saved }: { onSave: () => void; saved: boolean }) {
+function ProfileSection({ onSave, saved, name, email, initials }: { onSave: () => void; saved: boolean; name: string; email: string; initials: string }) {
   return (
     <div>
       <SectionHeader title="Profile" description="Manage your personal information" />
       <div className="flex items-center gap-4 mb-6">
         <div className="w-14 h-14 rounded-full bg-accent/20 border border-accent/30 flex items-center justify-center">
-          <span className="text-lg font-bold text-accent">KR</span>
+          <span className="text-lg font-bold text-accent">{initials}</span>
         </div>
         <button className="text-xs text-accent hover:underline">Change avatar</button>
       </div>
-      <Field label="Full name"><Input defaultValue="Karthik" /></Field>
-      <Field label="Email"><Input defaultValue="karthik@blackbox.dev" type="email" /></Field>
+      <Field label="Full name"><Input defaultValue={name} /></Field>
+      <Field label="Email"><Input defaultValue={email} type="email" /></Field>
       <Field label="Role"><Input defaultValue="Security Engineer" /></Field>
       <SaveButton onSave={onSave} saved={saved} />
     </div>
