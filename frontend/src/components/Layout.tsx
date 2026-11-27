@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Search, FolderSearch, Library, LayoutGrid, Settings, HelpCircle, Bell, ChevronDown, Github, LogOut, User, X, CheckCircle, AlertTriangle, Info } from 'lucide-react'
+import { Search, FolderSearch, Library, LayoutGrid, Settings, HelpCircle, Bell, ChevronDown, Github, LogOut, User, X, CheckCircle, AlertTriangle, Info } from 'lucide-react'
 import clsx from 'clsx'
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
@@ -104,7 +104,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="flex-1 p-2 space-y-0.5">
-          <NavItem to="/" icon={<LayoutDashboard size={15} />} label="Overview" active={pathname === '/'} />
           <NavItem to="/investigations" icon={<FolderSearch size={15} />} label="Investigations" active={pathname.startsWith('/investigations')} />
           <NavItem to="/evidence" icon={<Library size={15} />} label="Evidence library" active={pathname === '/evidence'} />
           <NavItem to="/workspaces" icon={<LayoutGrid size={15} />} label="Workspaces" active={pathname === '/workspaces'} />

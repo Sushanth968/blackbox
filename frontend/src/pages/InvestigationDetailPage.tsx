@@ -205,7 +205,7 @@ export default function InvestigationDetailPage() {
           </div>
         )}
         {tab === 'relationships' && (
-          <div className="p-6 h-full">
+          <div className="p-4 h-full flex flex-col">
             <EntityGraph investigationId={id!} />
           </div>
         )}
