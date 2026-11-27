@@ -86,7 +86,10 @@ async def sync_repo(investigation_id: uuid.UUID, db: AsyncSession = Depends(get_
     # Persist the fetched activity as a hashed JSON evidence file, then ingest it
     # through the normal pipeline (keeps evidence-first integrity).
     payload = json.dumps(events, indent=2).encode()
-    inv_dir = os.path.join(settings.UPLOAD_DIR, str(investigation_id))
+    base_upload_dir = os.path.realpath(settings.UPLOAD_DIR)
+    inv_dir = os.path.realpath(os.path.join(base_upload_dir, str(investigation_id)))
+    if os.path.commonpath([base_upload_dir, inv_dir]) != base_upload_dir:
+        raise HTTPException(400, "Invalid investigation path")
     os.makedirs(inv_dir, exist_ok=True)
     stored = f"{uuid.uuid4()}_github-sync.json"
     dest = os.path.join(inv_dir, stored)
