@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle, Clock, Filter, Flag,
@@ -95,6 +95,24 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
   const [actorFilter, setActorFilter] = useState('all')
   const [sourceFilter, setSourceFilter] = useState<Set<string>>(new Set())
   const [chatInput, setChatInput] = useState('')
+  const [detailWidth, setDetailWidth] = useState(288)
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null)
+
+  const onResizeStart = useCallback((e: React.MouseEvent) => {
+    resizeRef.current = { startX: e.clientX, startWidth: detailWidth }
+    const onMove = (ev: MouseEvent) => {
+      if (!resizeRef.current) return
+      const delta = resizeRef.current.startX - ev.clientX
+      setDetailWidth(Math.max(220, Math.min(560, resizeRef.current.startWidth + delta)))
+    }
+    const onUp = () => {
+      resizeRef.current = null
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [detailWidth])
 
   const { data: flags = [] } = useQuery<{ id: string; event_id: string; label: string | null }[]>({
     queryKey: ['flags', investigationId],
@@ -391,7 +409,15 @@ export default function TimelineView({ timeline, investigationId }: { timeline?:
       </div>
 
       {/* ── Right: Event details panel ── */}
-      <div className="w-72 flex-shrink-0 bg-panel flex flex-col overflow-y-auto">
+      <div
+        className="relative flex-shrink-0 bg-panel flex flex-col overflow-y-auto"
+        style={{ width: detailWidth }}
+      >
+        {/* Drag handle */}
+        <div
+          onMouseDown={onResizeStart}
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-accent/40 transition-colors z-10"
+        />
         {selectedEvent ? (
           <EventDetailsPanel
             event={selectedEvent}
