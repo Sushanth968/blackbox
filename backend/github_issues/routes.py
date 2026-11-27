@@ -9,6 +9,8 @@ router = APIRouter()
 
 GITHUB_API = "https://api.github.com"
 
+_SLUG_PART = re.compile(r"[\w.\-]+")  # simple char class — no backtracking (ReDoS-safe)
+
 
 class FetchRequest(BaseModel):
     repo_url: str
@@ -24,14 +26,35 @@ class AnalyzeRequest(BaseModel):
 
 
 def _parse_repo(repo_url: str) -> str:
-    """Extract 'owner/repo' from a GitHub URL or plain slug."""
-    repo_url = repo_url.strip().rstrip("/")
-    match = re.search(r"github\.com[/:]([^/]+/[^/]+?)(?:\.git)?$", repo_url)
-    if match:
-        return match.group(1)
-    if re.match(r"^[\w.\-]+/[\w.\-]+$", repo_url):
-        return repo_url
+    """Extract 'owner/repo' from a GitHub URL, git remote, or plain slug.
+
+    Uses linear string operations (no backtracking regex) so it is ReDoS-safe
+    even on hostile input.
+    """
+    s = (repo_url or "").strip().rstrip("/")
+    if "github.com" in s:
+        s = s.split("github.com", 1)[1].lstrip(":/")
+    if s.endswith(".git"):
+        s = s[:-4]
+    parts = [p for p in s.split("/") if p]
+    if len(parts) >= 2 and _SLUG_PART.fullmatch(parts[0]) and _SLUG_PART.fullmatch(parts[1]):
+        return f"{parts[0]}/{parts[1]}"
     raise ValueError(f"Cannot parse GitHub repo from: {repo_url!r}")
+
+
+def _map_issue(i: dict) -> dict:
+    """Map a GitHub issue (from the search API) to our issue shape."""
+    return {
+        "number": i["number"],
+        "title": i["title"],
+        "body": i.get("body") or "",
+        "state": i["state"],
+        "html_url": i["html_url"],
+        "user": i["user"]["login"] if i.get("user") else None,
+        "created_at": i["created_at"],
+        "labels": [l["name"] for l in i.get("labels", [])],
+        "comments": i.get("comments", 0),
+    }
 
 
 @router.post("/fetch")
@@ -46,38 +69,31 @@ async def fetch_issues(body: FetchRequest):
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
+    # Use the Search API with `type:issue` so pull requests are excluded at the
+    # source. (The /repos/{repo}/issues endpoint returns issues AND PRs mixed,
+    # so on PR-heavy repos the first page can be all PRs -> zero issues shown.)
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.get(
-            f"{GITHUB_API}/repos/{repo}/issues",
+            f"{GITHUB_API}/search/issues",
             headers=headers,
-            params={"state": "open", "per_page": 30},
+            params={
+                "q": f"repo:{repo} type:issue state:open",
+                "sort": "created",
+                "order": "desc",
+                "per_page": 30,
+            },
         )
 
-    if resp.status_code == 404:
-        raise HTTPException(404, f"Repository '{repo}' not found or not accessible.")
     if resp.status_code == 403:
         raise HTTPException(403, "GitHub rate limit exceeded or token missing for private repo.")
+    if resp.status_code == 422:
+        raise HTTPException(404, f"Repository '{repo}' not found or query invalid.")
     if resp.status_code != 200:
         raise HTTPException(502, f"GitHub API error {resp.status_code}.")
 
-    raw = resp.json()
-    issues = [
-        {
-            "number": i["number"],
-            "title": i["title"],
-            "body": i.get("body") or "",
-            "state": i["state"],
-            "html_url": i["html_url"],
-            "user": i["user"]["login"] if i.get("user") else None,
-            "created_at": i["created_at"],
-            "labels": [l["name"] for l in i.get("labels", [])],
-            "comments": i.get("comments", 0),
-        }
-        for i in raw
-        if not i.get("pull_request")
-    ]
-
-    return {"repo": repo, "issues": issues}
+    data = resp.json()
+    issues = [_map_issue(i) for i in data.get("items", [])]
+    return {"repo": repo, "issues": issues, "total_count": data.get("total_count", len(issues))}
 
 
 @router.post("/analyze")
