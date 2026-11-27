@@ -17,6 +17,7 @@ class InvestigationOut(BaseModel):
     title: str
     description: Optional[str]
     status: str
+    owner_email: Optional[str]
     created_at: datetime
     updated_at: datetime
 
