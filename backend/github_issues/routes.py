@@ -28,15 +28,21 @@ class AnalyzeRequest(BaseModel):
 def _parse_repo(repo_url: str) -> str:
     """Extract 'owner/repo' from a GitHub URL, git remote, or plain slug.
 
-    Uses linear string operations (no backtracking regex) so it is ReDoS-safe
-    even on hostile input.
+    Uses linear string operations only (ReDoS-safe) and performs **no hostname
+    substring check** (avoids the incomplete-URL-sanitization pitfall): the host
+    segment is dropped structurally, then owner/repo are validated.
     """
     s = (repo_url or "").strip().rstrip("/")
-    if "github.com" in s:
-        s = s.split("github.com", 1)[1].lstrip(":/")
     if s.endswith(".git"):
         s = s[:-4]
+    if "://" in s:                       # drop any scheme (https://, git://, ssh://)
+        s = s.split("://", 1)[1]
+    head = s.split("/", 1)[0]
+    if "@" in head and ":" in head:      # scp-style remote: git@host:owner/repo
+        s = s.split(":", 1)[1]
     parts = [p for p in s.split("/") if p]
+    if parts and "." in parts[0]:        # a leading host segment (e.g. github.com) has a dot — drop it
+        parts = parts[1:]
     if len(parts) >= 2 and _SLUG_PART.fullmatch(parts[0]) and _SLUG_PART.fullmatch(parts[1]):
         return f"{parts[0]}/{parts[1]}"
     raise ValueError(f"Cannot parse GitHub repo from: {repo_url!r}")
