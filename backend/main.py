@@ -11,6 +11,7 @@ from investigation.routes import router as investigations_router
 from evidence.routes import router as evidence_router
 from api.routes import router as api_router
 from github_issues.routes import router as github_issues_router
+from connectors.routes import router as connectors_router
 from api.routes import global_router as global_api_router
 
 import models.investigation
@@ -20,6 +21,7 @@ import models.entity
 import models.relationship
 import models.note
 import models.flagged_event
+import models.linked_repo
 
 app = FastAPI(title="BlackBox", version="0.1.0", description="Evidence-driven event reconstruction platform")
 
@@ -35,6 +37,7 @@ app.include_router(investigations_router, prefix="/api/investigations", tags=["i
 app.include_router(evidence_router, prefix="/api/investigations", tags=["evidence"])
 app.include_router(api_router, prefix="/api/investigations", tags=["api"])
 app.include_router(github_issues_router, prefix="/api/github-issues", tags=["github-issues"])
+app.include_router(connectors_router, prefix="/api/investigations", tags=["connectors"])
 app.include_router(global_api_router, prefix="/api", tags=["global"])
 
 os.makedirs("uploads", exist_ok=True)
