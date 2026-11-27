@@ -33,14 +33,14 @@ const STATUS_BADGE: Record<string, string> = {
 }
 
 const EXT_COLOR: Record<string, string> = {
-  txt:    'bg-blue-500/15 text-blue-400',
-  log:    'bg-blue-500/15 text-blue-400',
-  json:   'bg-yellow-500/15 text-yellow-400',
-  jsonl:  'bg-yellow-500/15 text-yellow-400',
-  csv:    'bg-green-500/15 text-green-400',
-  git:    'bg-purple-500/15 text-purple-400',
-  cicd:   'bg-cyan-500/15 text-cyan-400',
-  syslog: 'bg-orange-500/15 text-orange-400',
+  txt:    'bg-blue-500/15 text-blue-600',
+  log:    'bg-blue-500/15 text-blue-600',
+  json:   'bg-yellow-500/15 text-yellow-600',
+  jsonl:  'bg-yellow-500/15 text-yellow-600',
+  csv:    'bg-green-500/15 text-green-600',
+  git:    'bg-purple-500/15 text-purple-600',
+  cicd:   'bg-cyan-500/15 text-cyan-600',
+  syslog: 'bg-orange-500/15 text-orange-600',
 }
 
 function formatSize(bytes: number | null) {
@@ -79,14 +79,13 @@ export default function EvidenceLibraryPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-bold text-white flex items-center gap-2">
+          <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Library size={18} className="text-accent" />
             Evidence Library
           </h1>
           <p className="text-xs text-muted mt-0.5">All uploaded evidence files across investigations</p>
         </div>
 
-        {/* Summary chips */}
         <div className="flex items-center gap-2">
           <span className="text-[10px] px-2.5 py-1 rounded-md bg-panel-2 border border-border text-muted">
             {files.length} file{files.length !== 1 ? 's' : ''}
@@ -109,7 +108,7 @@ export default function EvidenceLibraryPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search files or investigations..."
-            className="w-full bg-panel border border-border rounded-md pl-8 pr-3 py-1.5 text-xs text-white placeholder-muted focus:outline-none focus:border-accent/50 transition-colors"
+            className="w-full bg-panel border border-border rounded-md pl-8 pr-3 py-1.5 text-xs text-foreground placeholder-muted focus:outline-none focus:border-accent/50 transition-colors"
           />
         </div>
         <div className="flex items-center gap-1.5">
@@ -120,9 +119,9 @@ export default function EvidenceLibraryPage() {
               className={clsx(
                 'text-[10px] px-2.5 py-1 rounded-md border capitalize transition-colors',
                 statusFilter === s
-                  ? s === 'all' ? 'bg-white/10 border-white/20 text-white font-medium'
+                  ? s === 'all' ? 'bg-black/10 border-black/20 text-foreground font-medium'
                     : clsx(STATUS_BADGE[s], 'font-medium')
-                  : 'bg-transparent border-border text-muted hover:text-white'
+                  : 'bg-transparent border-border text-muted hover:text-foreground'
               )}
             >
               {s}
@@ -148,7 +147,6 @@ export default function EvidenceLibraryPage() {
         </div>
       ) : (
         <div className="bg-panel border border-border rounded-xl overflow-hidden">
-          {/* Table header */}
           <div className="grid grid-cols-[2fr_1.5fr_80px_80px_100px_32px] gap-3 px-4 py-2.5 border-b border-border bg-panel-2 text-[10px] uppercase tracking-wider text-muted font-semibold">
             <span>File</span>
             <span>Investigation</span>
@@ -158,15 +156,13 @@ export default function EvidenceLibraryPage() {
             <span></span>
           </div>
 
-          {/* Rows */}
           <div className="divide-y divide-border">
             {filtered.map(f => (
-              <div key={f.id} className="grid grid-cols-[2fr_1.5fr_80px_80px_100px_32px] gap-3 px-4 py-3 items-center hover:bg-white/3 transition-colors group">
-                {/* File */}
+              <div key={f.id} className="grid grid-cols-[2fr_1.5fr_80px_80px_100px_32px] gap-3 px-4 py-3 items-center hover:bg-black/[0.03] transition-colors group">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <FileText size={13} className="text-muted flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs text-white truncate font-medium">{f.original_name}</p>
+                    <p className="text-xs text-foreground truncate font-medium">{f.original_name}</p>
                     {f.sha256 && (
                       <p className="text-[9px] text-subtle font-mono mt-0.5" title={`SHA-256: ${f.sha256}`}>
                         {f.sha256.slice(0, 12)}…
@@ -175,7 +171,6 @@ export default function EvidenceLibraryPage() {
                   </div>
                 </div>
 
-                {/* Investigation */}
                 <Link
                   to={`/investigations/${f.investigation_id}`}
                   className="flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors min-w-0 group/link"
@@ -185,7 +180,6 @@ export default function EvidenceLibraryPage() {
                   <ChevronRight size={10} className="flex-shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                 </Link>
 
-                {/* Type */}
                 <span className={clsx(
                   'text-[10px] px-2 py-0.5 rounded font-mono font-medium w-fit uppercase',
                   EXT_COLOR[f.file_type ?? ''] ?? 'bg-muted/10 text-muted'
@@ -193,15 +187,12 @@ export default function EvidenceLibraryPage() {
                   {f.file_type ?? '?'}
                 </span>
 
-                {/* Size */}
                 <span className="text-xs text-muted">{formatSize(f.file_size)}</span>
 
-                {/* Uploaded */}
                 <span className="text-[10px] text-muted">
                   {f.uploaded_at ? format(new Date(f.uploaded_at), 'MMM d, HH:mm') : '—'}
                 </span>
 
-                {/* Status icon */}
                 <div className="flex justify-end">
                   {STATUS_ICON[f.status] ?? STATUS_ICON.uploaded}
                 </div>

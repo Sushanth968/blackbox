@@ -49,7 +49,7 @@ export default function InvestigationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-lg font-bold text-white">Investigations</h1>
+          <h1 className="text-lg font-bold text-foreground">Investigations</h1>
           <p className="text-xs text-muted mt-0.5">Evidence-driven event reconstruction</p>
         </div>
         <button
@@ -64,15 +64,15 @@ export default function InvestigationsPage() {
       {/* Create form */}
       {showForm && (
         <div className="bg-panel border border-border rounded-xl p-5 mb-5">
-          <h2 className="text-xs font-semibold mb-4 text-white">New Investigation</h2>
+          <h2 className="text-xs font-semibold mb-4 text-foreground">New Investigation</h2>
           <input
-            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-white mb-3 focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground mb-3 focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
             placeholder="Title — e.g. Production API failure after deployment"
             value={title}
             onChange={e => setTitle(e.target.value)}
           />
           <textarea
-            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-white mb-3 resize-none focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
+            className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground mb-3 resize-none focus:outline-none focus:border-accent/50 placeholder-muted transition-colors"
             placeholder="Description (optional)"
             rows={2}
             value={description}
@@ -88,7 +88,7 @@ export default function InvestigationsPage() {
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-3 py-1.5 bg-panel-2 hover:bg-white/10 border border-border rounded-md text-xs text-muted hover:text-white transition-colors"
+              className="px-3 py-1.5 bg-panel-2 hover:bg-black/10 border border-border rounded-md text-xs text-muted hover:text-foreground transition-colors"
             >
               Cancel
             </button>
@@ -119,15 +119,13 @@ export default function InvestigationsPage() {
                   to={`/investigations/${inv.id}`}
                   className="flex items-center gap-4 bg-panel border border-border hover:border-border-2 rounded-xl px-5 py-4 transition-all"
                 >
-                  {/* Icon */}
                   <div className="w-9 h-9 rounded-lg bg-panel-2 border border-border flex items-center justify-center flex-shrink-0">
                     <FolderSearch size={15} className="text-muted group-hover:text-accent transition-colors" />
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-sm font-medium text-white group-hover:text-accent transition-colors truncate">{inv.title}</h3>
+                      <h3 className="text-sm font-medium text-foreground group-hover:text-accent transition-colors truncate">{inv.title}</h3>
                       <span className={clsx('text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-1', STATUS_STYLES[statusKey] || STATUS_STYLES.open)}>
                         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
                         {inv.status.replace('_', ' ')}
@@ -142,7 +140,6 @@ export default function InvestigationsPage() {
                   <ChevronRight size={14} className="text-subtle group-hover:text-muted transition-colors flex-shrink-0" />
                 </Link>
 
-                {/* Delete button — appears on hover */}
                 <button
                   onClick={e => { e.preventDefault(); setConfirmDelete(inv.id) }}
                   title="Delete investigation"
@@ -158,14 +155,14 @@ export default function InvestigationsPage() {
 
       {/* Delete confirm dialog */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-panel border border-border rounded-xl p-5 w-80 shadow-2xl">
-            <h3 className="text-sm font-semibold text-white mb-1">Delete investigation?</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-1">Delete investigation?</h3>
             <p className="text-xs text-muted mb-4">This will permanently delete the investigation, all evidence files, events, notes and flags. This cannot be undone.</p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="px-3 py-1.5 text-xs text-muted hover:text-white bg-panel-2 border border-border rounded-md transition-colors"
+                className="px-3 py-1.5 text-xs text-muted hover:text-foreground bg-panel-2 border border-border rounded-md transition-colors"
               >
                 Cancel
               </button>

@@ -5,10 +5,10 @@ import { api } from '../services/api'
 import type { EvidenceFile } from '../services/types'
 
 const STATUS_ICON = {
-  uploaded: <Clock size={14} className="text-gray-400" />,
-  processing: <Loader2 size={14} className="animate-spin text-yellow-400" />,
-  processed: <CheckCircle size={14} className="text-green-400" />,
-  failed: <AlertCircle size={14} className="text-red-400" />,
+  uploaded: <Clock size={14} className="text-muted" />,
+  processing: <Loader2 size={14} className="animate-spin text-warning" />,
+  processed: <CheckCircle size={14} className="text-success" />,
+  failed: <AlertCircle size={14} className="text-danger" />,
 }
 
 const ACCEPTED = '.log,.txt,.json,.jsonl,.ndjson,.csv,.git,.syslog'
@@ -63,7 +63,7 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
 
   return (
     <div className="bg-panel border border-border rounded-xl p-4">
-      <h2 className="text-sm font-semibold text-gray-300 mb-3">Evidence Files</h2>
+      <h2 className="text-sm font-semibold text-foreground mb-3">Evidence Files</h2>
 
       <div
         onDrop={handleDrop}
@@ -71,9 +71,9 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
         onClick={() => inputRef.current?.click()}
         className="border-2 border-dashed border-border hover:border-accent/50 rounded-lg p-4 text-center cursor-pointer transition-colors mb-4"
       >
-        <Upload size={20} className="mx-auto text-gray-500 mb-1" />
-        <p className="text-xs text-gray-500">Drop files or click to upload</p>
-        <p className="text-xs text-gray-600 mt-0.5">.log .txt .json .jsonl .csv .git .syslog</p>
+        <Upload size={20} className="mx-auto text-muted mb-1" />
+        <p className="text-xs text-muted">Drop files or click to upload</p>
+        <p className="text-xs text-subtle mt-0.5">.log .txt .json .jsonl .csv .git .syslog</p>
         <input
           ref={inputRef}
           type="file"
@@ -85,23 +85,23 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-gray-500" /></div>
+        <div className="flex justify-center py-4"><Loader2 size={16} className="animate-spin text-muted" /></div>
       ) : files?.length === 0 ? (
-        <p className="text-xs text-gray-600 text-center py-3">No evidence uploaded yet</p>
+        <p className="text-xs text-subtle text-center py-3">No evidence uploaded yet</p>
       ) : (
         <div className="space-y-2">
           {files?.map(f => (
-            <div key={f.id} className="flex items-start gap-2.5 p-2.5 bg-surface rounded-lg group">
-              <FileText size={14} className="text-gray-500 mt-0.5 flex-shrink-0" />
+            <div key={f.id} className="flex items-start gap-2.5 p-2.5 bg-surface rounded-lg group border border-border">
+              <FileText size={14} className="text-muted mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-white truncate">{f.original_name}</p>
+                <p className="text-xs text-foreground truncate">{f.original_name}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-xs text-gray-600 bg-white/5 px-1.5 py-0.5 rounded font-mono">
+                  <span className="text-xs text-muted bg-black/5 px-1.5 py-0.5 rounded font-mono">
                     {f.file_type?.toUpperCase() || '?'}
                   </span>
-                  <span className="text-xs text-gray-600">{((f.file_size || 0) / 1024).toFixed(1)} KB</span>
+                  <span className="text-xs text-muted">{((f.file_size || 0) / 1024).toFixed(1)} KB</span>
                   {f.sha256 && (
-                    <span className="text-xs text-gray-700 font-mono" title={`SHA-256: ${f.sha256}`}>
+                    <span className="text-xs text-subtle font-mono" title={`SHA-256: ${f.sha256}`}>
                       {f.sha256.slice(0, 8)}…
                     </span>
                   )}
@@ -112,7 +112,7 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
                   <button
                     onClick={() => reprocess.mutate(f.id)}
                     title="Reprocess"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-white"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-foreground"
                   >
                     <RefreshCw size={13} />
                   </button>
@@ -120,7 +120,7 @@ export default function EvidencePanel({ investigationId }: { investigationId: st
                 <button
                   onClick={() => remove.mutate(f.id)}
                   title="Delete"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-danger"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted hover:text-danger"
                 >
                   <Trash2 size={13} />
                 </button>

@@ -90,18 +90,16 @@ export default function InvestigationDetailPage() {
     <div className="flex flex-col h-full">
       {/* Breadcrumb + header */}
       <div className="px-6 pt-5 pb-4 border-b border-border bg-panel">
-        {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted mb-3">
-          <Link to="/investigations" className="hover:text-white transition-colors">Investigations</Link>
+          <Link to="/investigations" className="hover:text-foreground transition-colors">Investigations</Link>
           <ChevronRight size={12} />
-          <span className="text-white font-medium">INV-{investigation.id.slice(0,4).toUpperCase()}</span>
+          <span className="text-foreground font-medium">INV-{investigation.id.slice(0,4).toUpperCase()}</span>
         </div>
 
-        {/* Title row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-white">{investigation.title}</h1>
+              <h1 className="text-xl font-bold text-foreground">{investigation.title}</h1>
               <span className={clsx('text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5', STATUS_STYLES[statusKey] || STATUS_STYLES.open)}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
                 {statusLabel}
@@ -121,7 +119,7 @@ export default function InvestigationDetailPage() {
             </button>
             <button
               onClick={() => setTab('report')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-panel-2 hover:bg-white/10 border border-border rounded-md text-xs font-medium text-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-panel-2 hover:bg-black/10 border border-border rounded-md text-xs font-medium text-foreground transition-colors"
             >
               <FileOutput size={13} />
               Generate report
@@ -136,16 +134,15 @@ export default function InvestigationDetailPage() {
           </div>
         </div>
 
-        {/* Delete confirm dialog */}
         {confirmDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-panel border border-border rounded-xl p-5 w-80 shadow-2xl">
-              <h3 className="text-sm font-semibold text-white mb-1">Delete investigation?</h3>
-              <p className="text-xs text-muted mb-4">This will permanently delete <span className="text-white font-medium">{investigation?.title}</span>, all evidence files, events, notes and flags. This cannot be undone.</p>
+              <h3 className="text-sm font-semibold text-foreground mb-1">Delete investigation?</h3>
+              <p className="text-xs text-muted mb-4">This will permanently delete <span className="text-foreground font-medium">{investigation?.title}</span>, all evidence files, events, notes and flags. This cannot be undone.</p>
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-1.5 text-xs text-muted hover:text-white bg-panel-2 border border-border rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs text-muted hover:text-foreground bg-panel-2 border border-border rounded-md transition-colors"
                 >
                   Cancel
                 </button>
@@ -161,7 +158,6 @@ export default function InvestigationDetailPage() {
           </div>
         )}
 
-        {/* Stats chips */}
         <div className="flex items-center gap-2 mt-3 flex-wrap">
           <StatChip icon={<FileText size={12} />} label={`${evidenceCount} evidence source${evidenceCount !== 1 ? 's' : ''}`} />
           <StatChip icon={<List size={12} />} label={`${eventCount} events`} />
@@ -189,7 +185,7 @@ export default function InvestigationDetailPage() {
               'flex items-center gap-1.5 px-4 py-3 text-xs font-medium border-b-2 transition-colors whitespace-nowrap',
               tab === t.id
                 ? 'border-accent text-accent'
-                : 'border-transparent text-muted hover:text-white'
+                : 'border-transparent text-muted hover:text-foreground'
             )}
           >
             {t.icon}
@@ -268,7 +264,7 @@ function AnomaliesPanel({ conflicts }: { conflicts: { type: string; description:
         <div key={i} className="px-4 py-3 flex items-start gap-3">
           <AlertTriangle size={14} className="text-warning mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-xs font-medium text-white capitalize">{c.type.replace(/_/g, ' ')}</p>
+            <p className="text-xs font-medium text-foreground capitalize">{c.type.replace(/_/g, ' ')}</p>
             <p className="text-xs text-muted mt-0.5">{c.description}</p>
           </div>
         </div>
