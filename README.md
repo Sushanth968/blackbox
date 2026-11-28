@@ -62,7 +62,7 @@ When something breaks, evidence is scattered across systems with different forma
 ### Option 1 — Docker (recommended)
 
 ```bash
-git clone https://github.com/Karthik-0-8/blackbox.git
+git clone https://github.com/Sushanth968/blackbox.git
 cd blackbox
 docker compose up
 ```
